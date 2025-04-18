@@ -1,0 +1,50 @@
+# 是否为测试 true:测试 false:正式
+submitTest: true
+# 账号密码
+mobile: "18956715350"
+password: ""
+# 清单责任人和执行人，如果人名重复默认选中的是第一个
+toUser: "任秀坤"
+# 清单数组
+submitBody:
+  - "APP商城首页AI导购域名调整"
+  - "APP商城进货单选中的图标更改显示"
+  - "商城首页、会员中心隐藏触达弹窗"
+  - "APP打包下载地址更换为新地址，生产https://www.pgyer.com/homedoPre，fat地址https://www.pgyer.com/homedoFat"
+# ------------------------辅助功能配置------------------------------
+# 发送间隔时间分钟
+refTime: 2
+# 提交数据
+submitData:
+  id: ""
+  flowId: ""
+  readStatus: "1"
+  isxs: "1"
+  nos: ""
+  task_from: "0"
+  raise_user_id: ""
+  raise_user_name: ""
+  raise_user_centre: ""
+  # 1:中心 2:自己 3:对领导 4:对下属 5:对内部
+  type: "5"
+  # 提出人区域
+  area: "FY"
+  crmArea: ""
+  # 紧急程度 A:重要且紧急 B:重要不紧急 C:不重要紧急
+  level: "C"
+  # 使用上面的submitBody
+  body: ""
+  attach_url: []
+  owner_user_id: ""
+  owner_user_name: ""
+  owner_user_centre: ""
+  execute_user_id: []
+  execute_user_name: ""
+  # 完成时间(毫秒时间戳13位，https://www.jyshare.com/front-end/852/?utm_source=heifan)
+  # 如果时间戳为0则自动获取当前月份的最后一天时间23:59:59的时间戳
+  finish_time: 0
+  beforeJudge: 2
+  create_time: ""
+  meeting_resolution_time: null
+  status: 3
+  jnpf_meeting_task_jnpf_is_satisfaction: "-1"
