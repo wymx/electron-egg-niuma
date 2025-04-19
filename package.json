@@ -1,6 +1,6 @@
 {
   "name": "numatool",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "牛马工具",
   "main": "public/electron/main.js",
   "scripts": {

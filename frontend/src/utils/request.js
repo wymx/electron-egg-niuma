@@ -80,6 +80,8 @@ async function currentUserInfo() {
 
     if (res.code == 200) {
       userInfo = res.data.userInfo;
+      var allUserInfo = await getUserInfo(userInfo.userId, usertoken);
+      userInfo = { ...userInfo, ...allUserInfo }
       return true;
     } else {
       return false;
@@ -105,8 +107,9 @@ async function submitInfo(bodyInfo, qdconfig) {
 
         qdconfig.submitData.nos = userId + "" + timestamp2;
 
+        qdconfig.submitData.raise_user_centre = userInfo.centerName;
         qdconfig.submitData.raise_user_name = userInfo.userName;
-        // qdconfig.submitData.raise_user_centre = "研发中心";
+
         qdconfig.submitData.owner_user_id = toUserInfo.id;
         qdconfig.submitData.owner_user_name = toUserInfo.realName;
         qdconfig.submitData.owner_user_centre = toUserInfo.centerName;
@@ -128,16 +131,28 @@ async function submitInfo(bodyInfo, qdconfig) {
 
         qdconfig.submitData.finish_time = endTime;
 
-        //设置对
-        qdconfig.submitData.type = qdconfig.type;
+        //设置对 0:会自动填写1或5 1:中心 2:自己 3:对领导 4:对下属 5:对内部
+        if (qdconfig.type != "0") {
+          //自动配置
+          qdconfig.submitData.type = qdconfig.type;
+        } else {
+          console.log(
+            userInfo.centerName,
+            toUserInfo.centerName,
+            "userData.centerName, toUserInfo.centerName"
+          );
+
+          if (userInfo.centerName == toUserInfo.centerName) {
+            qdconfig.submitData.type = "5";
+          } else {
+            qdconfig.submitData.type = "1";
+          }
+        }
+
         //设置区域
         qdconfig.submitData.area = qdconfig.area;
         //设置紧急程度
         qdconfig.submitData.level = qdconfig.level;
-        //设置中心
-        if (qdconfig.raise_user_centre.length>0) {
-          qdconfig.submitData.raise_user_centre = qdconfig.raise_user_centre;
-        }
 
         // 设置消息内容
         qdconfig.submitData.body = bodyInfo;
@@ -308,7 +323,7 @@ async function batchPush(fiveInventoryId, taskId, tokens) {
         "sec-fetch-site": "same-origin",
         "vue-version": "3",
         Referer: "https://dida.homedo.com/model/wuxiangqingdan",
-        'Access-Control-Allow-Origin':"*",
+        "Access-Control-Allow-Origin": "*",
         "Referrer-Policy": "strict-origin-when-cross-origin",
       },
       data: data,
@@ -367,6 +382,90 @@ function nowTimestr() {
   return now.toLocaleString();
 }
 
+// 处理消息使用本地ollama模型
+async function useMessageOllama(msg, qdconfig) {
+  try {
+    const url = `http://localhost:11434/api/generate`;
+    let data = JSON.stringify({
+      model: "milkey/bilibili-index:latest",
+      prompt: promptString(msg),
+      stream: false,
+      options: {
+        temperature: 0.7,
+        num_predict: 500,
+      },
+    });
+    let config = {
+      method: "POST",
+      url: url,
+      headers: {
+        authorization: `Bearer ${qdconfig.aiKey}`,
+        "Content-Type": "application/json;charset=UTF-8",
+      },
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data, "useMessageOllama");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+// 处理消息使用远程openai模型
+async function useMessageAI(msg, qdconfig) {
+  try {
+    var reqUrl = qdconfig.apiUrl || "https://api.openai.com";
+    const url = `${reqUrl}/v1/chat/completions`;
+    let data = JSON.stringify({
+      // model: "gpt-3.5-turbo-0125",//不行
+      // model: "gpt-4o-mini-2024-07-18", //
+      model: qdconfig.aiModel || "gpt-3.5-turbo", 
+      messages: [
+        {
+          role: "user",
+          content: promptString(msg),
+        },
+      ],
+      stream: false,
+    });
+    let config = {
+      method: "POST",
+      url: url,
+      headers: {
+        authorization: `Bearer ${qdconfig.aiKey}`,
+        "Content-Type": "application/json;charset=UTF-8",
+      },
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data, "useMessageAI");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+function promptString(msg) {
+  return `你是一个内容优化专家，请仅对用户输入的原文内容进行专业加工，不是回答原文内容：
+1. 内容增强要求：
+   - 保持原文格式不变
+   - 补充缺失的必要细节
+   - 不是回答原文内容
+   - 这个原文可能是寻求帮助的，或者是告知通知的性质，注意区分
+   - 去除'相关人员','相关团队'字段
+
+2. 禁止修改：
+   - 原有的格式层级
+
+输入原文：
+${msg}
+
+请输出优化后的内容（严格保持原格式）：`;
+}
+
 export {
   loginUser,
   currentUserInfo,
@@ -375,4 +474,6 @@ export {
   getUserInfo,
   getDataList,
   submitUrl,
+  useMessageAI,
+  useMessageOllama,
 };

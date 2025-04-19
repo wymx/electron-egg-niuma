@@ -105,8 +105,7 @@ function saveInfo(infoData) {
   let data = JSON.stringify({
     info: rsaStr,
   });
-
-  console.log("saveInfosaveInfosaveInfo", data);
+  // console.log("saveInfosaveInfosaveInfo", data);
   try {
     let reqConfig = {
       method: "post",
