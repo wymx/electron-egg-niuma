@@ -82,8 +82,6 @@ changeText = changeText.replace('refTime: ', `refTime: ${result.refTime}`);
 changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
 
-
-
 const yamlContent = ref(changeText);
 // console.log("result:", result);
 const parseYaml = async () => {
