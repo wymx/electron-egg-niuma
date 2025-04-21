@@ -14,28 +14,9 @@
                         <input type="text" placeholder="为空则使用https://api.openai.com" v-model="result.apiUrl" />
                     </div>
                 </div>
-                <div style="text-align: left;">清单打印信息</div>
-                <textarea v-model="infoList" disabled="false" style="height: 200px;width: 100%;"></textarea>
-                <button @click="parseYaml">开始执行</button>
-            </div>
-        </div>
-        <div v-show="false" style="display: flex;flex-direction: row;height: 100vh;">
-            <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 50%;resize: none;"></textarea>
-            <div style="width: 50%;height: 100%;overflow: auto;">
-                <div class="top">
-                    <div>
-                        <input type="text" placeholder="请输入手机号" v-model="result.mobile" />
-                        <input type="password" placeholder="请输入密码" v-model="result.password" />
-                    </div>
-                    <div>
-                        <input type="password" placeholder="ai的key，为空不使用AI" v-model="result.aiKey" />
-                        <input type="text" placeholder="ai的模型" v-model="result.aiModel" />
-                        <input type="text" placeholder="为空则使用https://api.openai.com" v-model="result.apiUrl" />
-                    </div>
-                </div>
-                <div style="text-align: left;">日报打印信息</div>
-                <textarea v-model="infoList" disabled="false" style="height: 200px;width: 100%;"></textarea>
-                <button @click="parseYaml">开始执行</button>
+                <div class="text-info" style="text-align: left;">清单打印信息</div>
+                <div class="log-area" v-html="styledInfoList" disabled="true"></div>
+                <button @click="parseYaml" :disabled="isRuning">开始执行</button>
             </div>
         </div>
     </div>
@@ -60,6 +41,8 @@ const mobile = ref(allData.mobile || "");
 const password = ref(allData.password || "");
 
 const infoList = ref("");
+const styledInfoList = ref("");
+const isRuning = ref(false);
 
 var changeText = submitQingdan;
 var result = reactive(yaml.load(changeText));
@@ -88,9 +71,13 @@ const parseYaml = async () => {
     try {
         const yamlText = yamlContent.value;
         infoList.value = "";
+        styledInfoList.value = "";
+        isRuning.value = true;
+        
         if (!yamlText) {
             console.error("YAML text is empty.");
-            infoList.value = "YAML text is empty.";
+            addLinfo("YAML text is empty.",'error');
+            isRuning.value = false;
             return;
         }
         const resultNew = yaml.load(yamlText);
@@ -98,6 +85,7 @@ const parseYaml = async () => {
         // console.log("Parsed JSON:", JSON.stringify(result));
 
         if (!checkInput(result)) {
+            isRuning.value = false;
             return;
         }
         // console.log("Parsed JSON:", JSON.stringify(result));
@@ -110,21 +98,24 @@ const parseYaml = async () => {
             password: result.password
         });
         if (response) {
-            addLinfo("登录成功");
+            addLinfo("登录成功", 'success');
             addLinfo("开始获取登录信息");
             const response = await currentUserInfo();
             if (response) {
-                addLinfo("获取登录信息成功");
+                addLinfo("获取登录信息成功", 'success');
                 submitTimer(result);
             } else {
-                addLinfo("获取登录信息失败");
+                addLinfo("获取登录信息失败", 'error');
+                isRuning.value = false;
             }
         } else {
-            addLinfo("登录失败");
+            addLinfo("登录失败",'error');
+            isRuning.value = false;
         }
     } catch (e) {
         console.error(e);
-        infoList.value = "报错了：" + "\n" + e.message;
+        addLinfo("报错了：" + "\n" + e.message,'error');
+        isRuning.value = false;
     }
 
 };
@@ -132,23 +123,36 @@ const parseYaml = async () => {
 
 const checkInput = (result) => {
     if (!result.mobile || result.mobile.length < 1) {
-        addLinfo("没有手机号");
+        addLinfo("没有手机号", 'error');
         return false;
     }
     if (!result.password || result.password.length < 1) {
-        addLinfo("没有密码");
+        addLinfo("没有密码", 'error');
         return false;
     }
-    if (result.toUser.length < 1) {
-        addLinfo("没有接收人");
+
+    if (!["userSequence", "itemCross"].includes(result.executeMode)) {
+        addLinfo("无效的执行模式", 'error');
+        return false;
+    }
+
+    if (result.toUser.length < 1 || result.toUser[0].length < 1) {
+        addLinfo("没有接收人", 'error');
         return false;
     }
     if (result.area.length < 1) {
-        addLinfo("没有提出人区域");
+        addLinfo("没有提出人区域", 'error');
         return false;
     }
-    if (result.submitBody.length < 1) {
-        addLinfo("没有提交内容");
+    if (result.submitBody.length < 1 || result.submitBody[0].length < 1) {
+        addLinfo("没有提交内容", 'error');
+        return false;
+    }
+
+    // 更新二维数组校验逻辑
+    if (result.toUser.length !== result.submitBody.length ||
+        !result.submitBody.every(arr => arr.length > 0)) {
+        addLinfo("接收人和提交内容维度不匹配", 'error');
         return false;
     }
 
@@ -156,13 +160,16 @@ const checkInput = (result) => {
 };
 
 const submitTimer = async (qdconfig) => {
-    // 初始化索引
-    let currentIndex = 0;
+
     const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
     addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
-    const submitAndLog = async (currentIndex) => {
-        const bodyInfo = qdconfig.submitBody[currentIndex];
-        addLinfo("开始提交：" + bodyInfo);
+    const submitAndLog = async (userIndex, itemIndex) => {
+        // const bodyInfo = qdconfig.submitBody[currentIndex];
+        // addLinfo("开始提交：" + bodyInfo);
+        const bodyInfo = qdconfig.submitBody[userIndex][itemIndex];
+        const targetUser = qdconfig.toUser[userIndex];
+        addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务`);
+
         var aiBackInfo = bodyInfo;
         if (qdconfig.aiKey.length) {
             addLinfo("使用AI进行处理");
@@ -173,57 +180,63 @@ const submitTimer = async (qdconfig) => {
             } else {
                 addLinfo("AI返回数据异常，使用默认值");
             }
-
             // var resultInfo222 = await useMessageOllama(bodyInfo, qdconfig);
             // console.log("resultInfo222", resultInfo222);
         }
-
-
-        await submitInfo(aiBackInfo, qdconfig);
+        var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
+        addLinfo(submitStr, 'success');
     };
 
-
-    // 如果只有一条数据，直接执行一次并清除定时器
-    if (qdconfig.submitBody.length === 1) {
-        await submitAndLog(currentIndex);
-        addLinfo("所有提交已完成，请重新配置");
-        return; // 直接返回，不进入定时器
-    }
-
-    // 立即执行第一条数据
-    if (currentIndex < qdconfig.submitBody.length) {
-        await submitAndLog(currentIndex);
-        currentIndex++;
-    }
-    // 定时器函数
-    const submitInterval = setInterval(async () => {
-        if (currentIndex < qdconfig.submitBody.length) {
-            await submitAndLog(currentIndex);
-            currentIndex++;
-            if (currentIndex >= qdconfig.submitBody.length) {
-                // 清除定时器，停止进一步的执行
-                clearTimer(submitInterval)
+    const executeStrategies = {
+        userSequence: async () => {
+            for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
+                const userTasks = qdconfig.submitBody[userIndex];
+                for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
+                    await submitAndLog(userIndex, itemIndex);
+                    await new Promise(resolve => setTimeout(resolve, interval));
+                }
             }
-        } else {
-            // 清除定时器，停止进一步的执行
-            clearTimer(submitInterval)
-        }
-    }, interval);
-    const clearTimer = (submitInterval) => {
-        currentIndex = 0;
-        clearInterval(submitInterval);
-        addLinfo("所有提交已完成，请重新配置");
+        },
 
+        itemCross: async () => {
+            const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
+            for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+                for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
+                    if (itemIndex < qdconfig.submitBody[userIndex].length) {
+                        await submitAndLog(userIndex, itemIndex);
+                        await new Promise(resolve => setTimeout(resolve, interval));
+                    }
+                }
+            }
+        }
     };
+
+    try {
+        if (qdconfig.executeMode === "userSequence") {
+            await executeStrategies.userSequence();
+        } else {
+            await executeStrategies.itemCross();
+        }
+    } finally {
+        addLinfo("所有提交已完成，请重新配置");
+        isRuning.value = false;
+    }
 
 };
 
-const addLinfo = (info) => {
-    if (infoList.value.length > 0) {
-        infoList.value = infoList.value + "\n" + info + " " + nowTimestr();
-    } else {
-        infoList.value = info + " " + nowTimestr();
-    }
+const addLinfo = (info, type = 'info') => {
+    const colors = {
+        error: 'red',
+        success: 'green',
+        warning: 'orange',
+        info: '#333'
+    };
+
+    const newLine = `<span style="color: ${colors[type]}">${info} ${nowTimestr()}</span>`;
+
+    styledInfoList.value = styledInfoList.value
+        ? `${styledInfoList.value}<br>${newLine}`
+        : newLine;
 }
 
 const nowTimestr = () => {
@@ -234,4 +247,17 @@ const nowTimestr = () => {
 
 
 </script>
-<style scoped></style>
+<style scoped>
+.text-info{
+    font-size: 15px;
+}
+.log-area {
+    min-height: 400px;
+    border: 1px solid #ccc;
+    padding: 8px;
+    white-space: pre-wrap;
+    overflow: auto;
+    font-family: monospace;
+    text-align: left;
+}
+</style>

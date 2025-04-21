@@ -81,7 +81,7 @@ async function currentUserInfo() {
     if (res.code == 200) {
       userInfo = res.data.userInfo;
       var allUserInfo = await getUserInfo(userInfo.userId, usertoken);
-      userInfo = { ...userInfo, ...allUserInfo }
+      userInfo = { ...userInfo, ...allUserInfo };
       return true;
     } else {
       return false;
@@ -92,13 +92,13 @@ async function currentUserInfo() {
   }
 }
 
-async function submitInfo(bodyInfo, qdconfig) {
+async function submitInfo(toUserName, bodyInfo, qdconfig) {
   try {
     if (userInfo != null && usertoken != "" && !inSubmit) {
       inSubmit = true;
       var userId = userInfo.userId;
 
-      var touserData = await getOneInfo(qdconfig.toUser, usertoken);
+      var touserData = await getOneInfo(toUserName, usertoken);
       // console.log(touserData, "touserData");
       if (touserData != null) {
         var toUserInfo = await getUserInfo(touserData.id, usertoken);
@@ -164,21 +164,26 @@ async function submitInfo(bodyInfo, qdconfig) {
           console.log("测试===提交信息", nowTimestr());
           console.log(qdconfig.submitData);
           saveInfo(qdconfig);
+          return "测试===提交：" + bodyInfo + nowTimestr();
         } else {
-          console.log("开始===提交信息", nowTimestr());
+          console.log("生产===提交信息", nowTimestr());
           // console.log(qdconfig.submitData);
           // 开始提交
           await submitUrl(submitData, usertoken, qdconfig.submitData.nos);
           saveInfo(qdconfig);
+          return "生产===提交：" + bodyInfo + nowTimestr();
         }
       } else {
-        console.log("没有找到touser用户信息");
+        // console.log("没有找到touser用户信息");
+        return "没有找到touser用户信息，检查用户名";
       }
     } else {
-      console.log("没有找到用户信息");
+      // console.log("没有找到用户信息");
+      return "没有找到用户信息";
     }
   } catch (error) {
     console.error("提交失败:", error);
+    return "提交失败:" + error.messages;
   } finally {
     inSubmit = false; // 确保 inSubmit 标志正确重置
   }
@@ -421,7 +426,7 @@ async function useMessageAI(msg, qdconfig) {
     let data = JSON.stringify({
       // model: "gpt-3.5-turbo-0125",//不行
       // model: "gpt-4o-mini-2024-07-18", //
-      model: qdconfig.aiModel || "gpt-3.5-turbo", 
+      model: qdconfig.aiModel || "gpt-3.5-turbo",
       messages: [
         {
           role: "user",
