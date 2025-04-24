@@ -215,19 +215,26 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                 for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
                     const userTasks = qdconfig.submitBody[userIndex];
                     for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
-                        await submitAndLog(userIndex, itemIndex);
-                        await new Promise(resolve => setTimeout(resolve, interval));
+                        if (isRuning.value) {
+                            await submitAndLog(userIndex, itemIndex);
+                            await new Promise(resolve => setTimeout(resolve, interval));
+                        } else {
+                            return;
+                        }
                     }
                 }
             },
-
             itemCross: async () => {
                 const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
                 for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
                     for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
                         if (itemIndex < qdconfig.submitBody[userIndex].length) {
-                            await submitAndLog(userIndex, itemIndex);
-                            await new Promise(resolve => setTimeout(resolve, interval));
+                            if (isRuning.value) {
+                                await submitAndLog(userIndex, itemIndex);
+                                await new Promise(resolve => setTimeout(resolve, interval));
+                            } else {
+                                return;
+                            }
                         }
                     }
                 }
