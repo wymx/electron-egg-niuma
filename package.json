@@ -1,6 +1,6 @@
 {
   "name": "numatool",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "牛马工具",
   "main": "public/electron/main.js",
   "scripts": {
@@ -18,7 +18,8 @@
     "build-we": "ee-bin build --cmds=win_e",
     "build-m": "ee-bin build --cmds=mac",
     "build-m-arm64": "ee-bin build --cmds=mac_arm64",
-    "build-l": "ee-bin build --cmds=linux"
+    "build-l": "ee-bin build --cmds=linux",
+    "build-all": "npm run build && npm run build-w && npm run build-m && npm run build-m-arm64"
   },
   "repository": "https://github.com/dromara/electron-egg.git",
   "keywords": [
@@ -26,7 +27,7 @@
     "electron-egg",
     "ElectronEgg"
   ],
-  "author": "mm",
+  "author": "wym",
   "license": "Apache",
   "devDependencies": {
     "@electron/rebuild": "^3.7.1",

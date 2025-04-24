@@ -383,8 +383,9 @@ function getHeaders(tokens) {
 }
 
 function nowTimestr() {
-  const now = new Date();
-  return now.toLocaleString();
+  // const now = new Date();
+  // return now.toLocaleString();
+  return ""
 }
 
 // 处理消息使用本地ollama模型

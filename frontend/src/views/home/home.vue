@@ -1,7 +1,12 @@
 <template>
     <div style="display: flex;flex-direction: column;">
-        <div style="display: flex;flex-direction: row;height: 100vh;">
-            <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 50%;resize: none;"></textarea>
+        <div style="display: flex;">
+            <div>牛马工具</div>
+            <button @click="closeApp">退出</button>
+        </div>
+        <div style="display: flex;flex-direction: row;height: calc(100vh - 20px);">
+            <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 50%;resize: none;"
+                spellcheck="false"></textarea>
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
                     <div>
@@ -17,6 +22,7 @@
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
                 <button @click="parseYaml" :disabled="isRuning">开始执行</button>
+                <button v-show="isRuning" @click="submitTimer(result, true)">停止执行</button>
             </div>
         </div>
     </div>
@@ -25,12 +31,13 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import yaml from 'js-yaml';
-import Cookies from 'js-cookie'
-
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, useMessageOllama } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 
-const allResult = ref(Cookies.get("allResult") || "{}");
+const isStopped = ref(false);
+
+
+const allResult = ref(localStorage.getItem("allResult") || "{}");
 
 const allData = JSON.parse(allResult.value);
 
@@ -39,6 +46,7 @@ const aiModel = ref(allData.aiModel || "");
 const apiUrl = ref(allData.apiUrl || "");
 const mobile = ref(allData.mobile || "");
 const password = ref(allData.password || "");
+
 
 const infoList = ref("");
 const styledInfoList = ref("");
@@ -56,14 +64,17 @@ result.password = password.value;
 const refTime = ref(allData.refTime || 1);
 const area = ref(allData.area || "FY");
 const level = ref(allData.level || "C");
+const executeMode = ref(allData.executeMode || "");
 
 result.refTime = refTime.value;
 result.area = area.value;
 result.level = level.value;
+result.executeMode = executeMode.value;
 
 changeText = changeText.replace('refTime: ', `refTime: ${result.refTime}`);
 changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
+changeText = changeText.replace('executeMode: ""', `level: "${result.executeMode}"`);
 
 const yamlContent = ref(changeText);
 // console.log("result:", result);
@@ -73,10 +84,10 @@ const parseYaml = async () => {
         infoList.value = "";
         styledInfoList.value = "";
         isRuning.value = true;
-        
+
         if (!yamlText) {
             console.error("YAML text is empty.");
-            addLinfo("YAML text is empty.",'error');
+            addLinfo("YAML text is empty.", 'error');
             isRuning.value = false;
             return;
         }
@@ -90,7 +101,7 @@ const parseYaml = async () => {
         }
         // console.log("Parsed JSON:", JSON.stringify(result));
 
-        Cookies.set("allResult", JSON.stringify(result), { expires: 7 });
+        localStorage.setItem("allResult", JSON.stringify(result))
 
         addLinfo("开始登录");
         const response = await loginUser({
@@ -109,12 +120,12 @@ const parseYaml = async () => {
                 isRuning.value = false;
             }
         } else {
-            addLinfo("登录失败",'error');
+            addLinfo("登录失败", 'error');
             isRuning.value = false;
         }
     } catch (e) {
         console.error(e);
-        addLinfo("报错了：" + "\n" + e.message,'error');
+        addLinfo("报错了：" + "\n" + e.message, 'error');
         isRuning.value = false;
     }
 
@@ -159,70 +170,91 @@ const checkInput = (result) => {
     return true;
 };
 
-const submitTimer = async (qdconfig) => {
+const submitTimer = async (qdconfig, stopRequest = false) => {
 
-    const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
-    addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
-    const submitAndLog = async (userIndex, itemIndex) => {
-        // const bodyInfo = qdconfig.submitBody[currentIndex];
-        // addLinfo("开始提交：" + bodyInfo);
-        const bodyInfo = qdconfig.submitBody[userIndex][itemIndex];
-        const targetUser = qdconfig.toUser[userIndex];
-        addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务`);
+    try {
 
-        var aiBackInfo = bodyInfo;
-        if (qdconfig.aiKey.length) {
-            addLinfo("使用AI进行处理");
-            var resultInfo = await useMessageAI(bodyInfo, qdconfig);
-            if (resultInfo && resultInfo.choices && resultInfo.choices.length > 0) {
-                aiBackInfo = resultInfo.choices[0].message.content;
-                addLinfo("AI返回信息：" + aiBackInfo);
-            } else {
-                addLinfo("AI返回数据异常，使用默认值");
-            }
-            // var resultInfo222 = await useMessageOllama(bodyInfo, qdconfig);
-            // console.log("resultInfo222", resultInfo222);
+        if (stopRequest) {
+            addLinfo("已请求停止执行", 'warning');
+            throw new Error("用户主动中止循环");
         }
-        var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
-        addLinfo(submitStr, 'success');
-    };
 
-    const executeStrategies = {
-        userSequence: async () => {
-            for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
-                const userTasks = qdconfig.submitBody[userIndex];
-                for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
-                    await submitAndLog(userIndex, itemIndex);
-                    await new Promise(resolve => setTimeout(resolve, interval));
+        const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
+        addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
+        const submitAndLog = async (userIndex, itemIndex) => {
+            // const bodyInfo = qdconfig.submitBody[currentIndex];
+            // addLinfo("开始提交：" + bodyInfo);
+            const bodyInfo = qdconfig.submitBody[userIndex][itemIndex];
+            const targetUser = qdconfig.toUser[userIndex];
+            addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务`);
+
+            var aiBackInfo = bodyInfo;
+            if (qdconfig.aiKey.length) {
+                addLinfo("使用AI进行处理");
+                var resultInfo = await useMessageAI(bodyInfo, qdconfig);
+                if (resultInfo && resultInfo.choices && resultInfo.choices.length > 0) {
+                    aiBackInfo = resultInfo.choices[0].message.content;
+                    addLinfo("AI返回信息：" + aiBackInfo);
+                } else {
+                    addLinfo("AI返回数据异常，使用默认值");
                 }
             }
-        },
+            var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
+            addLinfo(submitStr, 'success');
+            if (submitStr.indexOf("没有找到touser用户信息") != -1) {
+                throw new Error("找不到接收人");
+            } else if (submitStr.indexOf("没有找到用户信息") != -1) {
+                throw new Error("没有找到用户信息");
+            } else if (submitStr.indexOf("提交失败") != -1) {
+                throw new Error("提交失败了，稍后尝试");
+            }
+        };
 
-        itemCross: async () => {
-            const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
-            for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+        const executeStrategies = {
+            userSequence: async () => {
                 for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
-                    if (itemIndex < qdconfig.submitBody[userIndex].length) {
+                    const userTasks = qdconfig.submitBody[userIndex];
+                    for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
                         await submitAndLog(userIndex, itemIndex);
                         await new Promise(resolve => setTimeout(resolve, interval));
                     }
                 }
-            }
-        }
-    };
+            },
 
-    try {
+            itemCross: async () => {
+                const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
+                for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+                    for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
+                        if (itemIndex < qdconfig.submitBody[userIndex].length) {
+                            await submitAndLog(userIndex, itemIndex);
+                            await new Promise(resolve => setTimeout(resolve, interval));
+                        }
+                    }
+                }
+            }
+        };
+
         if (qdconfig.executeMode === "userSequence") {
             await executeStrategies.userSequence();
         } else {
             await executeStrategies.itemCross();
         }
-    } finally {
         addLinfo("所有提交已完成，请重新配置");
+    } catch (e) {
+        if (e.message.includes("中止循环")) {
+            addLinfo(e.message, 'error');
+        } else {
+            throw e; // 其他异常继续抛出
+        }
+        addLinfo("" + "" + e.message, 'error');
+    } finally {
         isRuning.value = false;
+        isStopped.value = false;
     }
 
 };
+
+
 
 const addLinfo = (info, type = 'info') => {
     const colors = {
@@ -244,13 +276,17 @@ const nowTimestr = () => {
     return now.toLocaleString();
 }
 
-
+const closeApp = () => {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.send('app-quit');
+}
 
 </script>
 <style scoped>
-.text-info{
+.text-info {
     font-size: 15px;
 }
+
 .log-area {
     min-height: 400px;
     border: 1px solid #ccc;
