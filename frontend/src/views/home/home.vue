@@ -1,10 +1,21 @@
 <template>
     <div style="display: flex;flex-direction: column;">
-        <div style="display: flex;">
-            <div>牛马工具</div>
-            <button @click="closeApp">退出</button>
+        <div style="display: flex;align-items: center;">
+            <div style="display: flex;flex-direction: column;">
+                <div>牛马</div>
+                <div>工具</div>
+            </div>
+            <div v-for="(item, index) in allTemples" :key="item" style="display: flex;flex-direction: column;margin-left: 8px;">
+                <input type="text" v-model="item.name" style="width:80px;margin-right:5px" @blur="saveLocalStorage" />
+                <div style="display: flex;flex-direction: row;justify-content: space-around;">
+                    <button @click="useTemple(index)">使用</button>
+                    <button @click="deleteTemple(index)">删除</button>
+                </div>
+            </div>
+            <button style="margin-left: 8px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
+            <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
         </div>
-        <div style="display: flex;flex-direction: row;height: calc(100vh - 20px);">
+        <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 50%;resize: none;"
                 spellcheck="false"></textarea>
             <div style="width: 50%;height: 100%;overflow: auto;">
@@ -34,16 +45,24 @@ import yaml from 'js-yaml';
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, useMessageOllama } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 
-const isStopped = ref(false);
-
+const isStopped = ref(false);//是否正在运行
+const allTempleStr = ref(localStorage.getItem("allTempleStr") || "[]");//存储所有模板数据
+const allTemples = reactive([]);
+try {
+    const parsed = JSON.parse(allTempleStr.value);
+    allTemples.splice(0, allTemples.length, ...parsed); // 保持响应性
+} catch (e) {
+    allTemples.splice(0, allTemples.length); // 清空数组
+}
 
 const allResult = ref(localStorage.getItem("allResult") || "{}");
-
 const allData = JSON.parse(allResult.value);
 
+//ai相关配置
 const aiKey = ref(allData.aiKey || "");
 const aiModel = ref(allData.aiModel || "");
 const apiUrl = ref(allData.apiUrl || "");
+
 const mobile = ref(allData.mobile || "");
 const password = ref(allData.password || "");
 
@@ -61,16 +80,17 @@ result.mobile = mobile.value;
 result.password = password.value;
 
 
-const refTime = ref(allData.refTime || 1);
+const refTime = ref(allData.refTime || 1);//时间间隔
 const area = ref(allData.area || "FY");
 const level = ref(allData.level || "C");
-const executeMode = ref(allData.executeMode || "");
+const executeMode = ref(allData.executeMode || "");//发送方式
 
 result.refTime = refTime.value;
 result.area = area.value;
 result.level = level.value;
 result.executeMode = executeMode.value;
 
+//将保存的信息显示到左侧输入框中
 changeText = changeText.replace('refTime: ', `refTime: ${result.refTime}`);
 changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
@@ -283,10 +303,30 @@ const nowTimestr = () => {
     return now.toLocaleString();
 }
 
+const useTemple = (index) => {
+    yamlContent.value = allTemples[index].content
+}
+const saveCurrentTemple = () => {
+    allTemples.push({
+        name: `模版${allTemples.length + 1}`,
+        content: yamlContent.value
+    });
+    saveLocalStorage()
+}
+const deleteTemple = (index) => {
+    allTemples.splice(index, 1);
+    saveLocalStorage()
+}
+
+const saveLocalStorage = () => {
+    const allTempleStrNew = JSON.stringify(allTemples);
+    localStorage.setItem("allTempleStr", allTempleStrNew);
+}
 const closeApp = () => {
     const { ipcRenderer } = require('electron');
     ipcRenderer.send('app-quit');
 }
+
 
 </script>
 <style scoped>

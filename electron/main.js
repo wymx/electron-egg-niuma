@@ -14,9 +14,8 @@ const life = new Lifecycle();
 app.register("ready", life.ready);
 app.register("electron-app-ready", life.electronAppReady);
 app.register("window-ready", life.windowReady);
-app.register("before-close", ()=>{
-    life.beforeClose
-
+app.register("before-close", () => {
+  life.beforeClose;
 });
 
 // register preload
@@ -26,8 +25,8 @@ const template = [
   {
     label: "牛马工具",
     submenu: [
-        { label: "复制", accelerator: "CmdorCtrl+C", role: "copy" },
-        { label: "粘贴", accelerator: "CmdorCtrl+V", role: "paste" },
+      { label: "复制", accelerator: "CmdorCtrl+C", role: "copy" },
+      { label: "粘贴", accelerator: "CmdorCtrl+V", role: "paste" },
       { label: "刷新", accelerator: "CmdorCtrl+R", role: "reload" },
       {
         label: "退出",
@@ -62,7 +61,6 @@ const template = [
 // 设置顶部菜单，当前设置为关闭话状态
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
-
 
 ipcMain.on("app-quit", () => {
   const { app } = require("electron");

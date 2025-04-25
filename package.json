@@ -1,7 +1,7 @@
 {
-  "name": "numatool",
-  "version": "0.0.5",
-  "description": "牛马工具",
+  "name": "niuma",
+  "version": "0.0.6",
+  "description": "实用型牛马工具",
   "main": "public/electron/main.js",
   "scripts": {
     "dev": "ee-bin dev",
