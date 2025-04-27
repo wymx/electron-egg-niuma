@@ -4,7 +4,7 @@ const submitQingdan = `# ------注意缩进格式-------
 submitTest: true
 
 # 可选值：userSequence(顺序执行)/itemCross(交叉执行)
-executeMode: "itemCross" 
+executeMode: "userSequence" 
 
 # 责任人和执行人，如果人名重复默认选中的是第一个(名字不能输错)
 # 使用多级数组当前示例是给一个人提交的示例
@@ -28,6 +28,11 @@ area: ""
 
 # 紧急程度 A:重要且紧急 B:重要不紧急 C:不重要紧急
 level: ""
+
+# 结束时间 0:当月最后一天 1:当前时间+1天 2:当前时间+2天 以此类推
+finishTimeType: 0
+# 提交时间随机增加分钟范围
+finishTimeAutom: 1
 
 # 提交数据
 submitData:

@@ -1,6 +1,6 @@
 {
   "name": "niuma",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "实用型牛马工具",
   "main": "public/electron/main.js",
   "scripts": {

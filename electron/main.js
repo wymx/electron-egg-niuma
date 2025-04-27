@@ -26,7 +26,10 @@ const template = [
     label: "牛马工具",
     submenu: [
       { label: "复制", accelerator: "CmdorCtrl+C", role: "copy" },
+      { label: "撤销", accelerator: "CmdorCtrl+Z", role: "undo" },
+      { label: "剪切", accelerator: "CmdorCtrl+X", role: "cut" },
       { label: "粘贴", accelerator: "CmdorCtrl+V", role: "paste" },
+      { label: "全选", accelerator: "CmdorCtrl+A", role: "selectAll" },,
       { label: "刷新", accelerator: "CmdorCtrl+R", role: "reload" },
       {
         label: "退出",

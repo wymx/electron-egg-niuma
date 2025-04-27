@@ -117,16 +117,28 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
         qdconfig.submitData.execute_user_id = [toUserInfo.id];
         qdconfig.submitData.execute_user_name = toUserInfo.realName;
 
-        // 构造当月最后一天23点的时间戳
-        const getMonthEndTimestamp = () => {
-          const date = new Date();
-          date.setMonth(date.getMonth() + 1, 0); // 设置为下个月的第0天（即本月最后一天）
-          date.setHours(23, 0, 0, 0); // 设置时间为23:00:00.000
-          return date.getTime();
-        };
+        // 结束时间戳
+        const date = new Date();
+        if (qdconfig.finishTimeType == 0) {
+          // 设置为下个月的第0天（即本月最后一天）
+          date.setMonth(date.getMonth() + 1, 0);
+        } else {
+          date.setDate(date.getDate() + qdconfig.finishTimeType);
+        }
+        date.setHours(23, date.getMinutes(), date.getSeconds(), 0); // 设置时间为23
+        // 增加随机分钟逻辑
+        if (qdconfig.finishTimeAutom > 0) {
+          const randomMinutes = Math.floor(
+            Math.random() * (qdconfig.finishTimeAutom - 0)
+          );
+          date.setMinutes(date.getMinutes() + randomMinutes);
+        }
+        console.log(date, "endTime");
+        const getMonthEndTimestamp = date.getTime();
+
         var endTime =
           qdconfig.submitData.finish_time == 0
-            ? getMonthEndTimestamp()
+            ? getMonthEndTimestamp
             : qdconfig.submitData.finish_time;
 
         qdconfig.submitData.finish_time = endTime;
@@ -385,7 +397,7 @@ function getHeaders(tokens) {
 function nowTimestr() {
   // const now = new Date();
   // return now.toLocaleString();
-  return ""
+  return "";
 }
 
 // 处理消息使用本地ollama模型
