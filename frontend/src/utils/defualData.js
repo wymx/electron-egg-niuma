@@ -6,7 +6,8 @@ submitTest: true
 # 可选值：userSequence(顺序执行)/itemCross(交叉执行)
 executeMode: "userSequence" 
 
-# 责任人和执行人，如果人名重复默认选中的是第一个(名字不能输错)
+# 责任人和执行人(名字不能输错)
+# 如果人名重复推荐使用【手机号】
 # 使用多级数组当前示例是给一个人提交的示例
 toUser:
   - "xxx"

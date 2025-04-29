@@ -74,7 +74,7 @@ function ddBotNotify(sendMsg) {
     timeout,
   };
   if (DD_BOT_TOKEN && DD_BOT_SECRET) {
-    const crypto = require("crypto");
+    // const crypto = require("crypto");
     const dateNow = Date.now();
     const hmac = crypto.createHmac("sha256", DD_BOT_SECRET);
     hmac.update(`${dateNow}\n${DD_BOT_SECRET}`);
