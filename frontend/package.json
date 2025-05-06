@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-yaml": "^6.1.2",
     "axios": "^1.8.4",
     "form-data": "^4.0.2",
     "js-yaml": "^4.1.0",
     "jsencrypt": "^3.3.2",
     "vue": "^3.5.12",
+    "vue-codemirror": "^6.1.1",
     "vue-router": "^4.0.14"
   },
   "devDependencies": {

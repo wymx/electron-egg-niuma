@@ -5,7 +5,8 @@
                 <div>牛马</div>
                 <div>工具</div>
             </div>
-            <div v-for="(item, index) in allTemples" :key="item" style="display: flex;flex-direction: column;margin-left: 8px;">
+            <div v-for="(item, index) in allTemples" :key="item"
+                style="display: flex;flex-direction: column;margin-left: 8px;">
                 <input type="text" v-model="item.name" style="width:80px;margin-right:5px" @blur="saveLocalStorage" />
                 <div style="display: flex;flex-direction: row;justify-content: space-around;">
                     <button @click="useTemple(index)">使用</button>
@@ -16,8 +17,11 @@
             <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
-            <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 50%;resize: none;"
-                spellcheck="false"></textarea>
+            <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
+                spellcheck="false"></textarea> -->
+            <codemirror ref="mycodemirror" v-model="yamlContent" :disabled="false" :indentWithTab="true"
+                :extensions="extensions" :placeholder="'请输入yaml配置'" :tabSize="2"
+                style="height: 100%;width: 50%;resize: none; text-align: left;" />
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
                     <div>
@@ -41,9 +45,42 @@
 </template>
 <script setup>
 import { ref, reactive } from 'vue'
-import yaml from 'js-yaml';
+import jsyaml from 'js-yaml';
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, useMessageOllama } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
+
+import { Codemirror } from 'vue-codemirror'
+import { EditorView } from '@codemirror/view'
+import { yaml,yamlLanguage } from '@codemirror/lang-yaml'
+import { autocompletion } from '@codemirror/autocomplete'
+import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
+import { tags } from '@lezer/highlight' // 语法高亮标签
+
+// 创建高亮样式（优先级高于theme）
+const yamlHighlight = HighlightStyle.define([
+  { tag: tags.propertyName, color: "#000" }, // 属性名✅
+  { tag: tags.string, color: "#cb8748" },       // 字符串✅
+  { tag: tags.comment, color: "#aaa" },      // 注释✅
+  { tag: tags.number, color: "#0185ca" },       //
+  { tag: tags.bool, color: "#d7cd61" }          //
+])
+
+// const yamlHighlight = HighlightStyle.define([
+//   { tag: tags.propertyName, color: "#0185ca" }, // 属性名✅
+//   { tag: tags.string, color: "#cb8748" },       // 字符串✅
+//   { tag: tags.comment, color: "#d7cd61" },      // 注释✅
+//   { tag: tags.number, color: "#f00" },       //
+//   { tag: tags.bool, color: "#0ff" }          //
+// ])
+
+// 配置顺序调整
+const extensions = [
+  EditorView.lineWrapping,
+  autocompletion(),
+  yaml(),
+  syntaxHighlighting(yamlHighlight), // 添加语法高亮
+]
+
 
 const isStopped = ref(false);//是否正在运行
 const allTempleStr = ref(localStorage.getItem("allTempleStr") || "[]");//存储所有模板数据
@@ -72,7 +109,7 @@ const styledInfoList = ref("");
 const isRuning = ref(false);
 
 var changeText = submitQingdan;
-var result = reactive(yaml.load(changeText));
+var result = reactive(jsyaml.load(changeText));
 result.aiKey = aiKey.value;
 result.aiModel = aiModel.value;
 result.apiUrl = apiUrl.value;
@@ -111,7 +148,7 @@ const parseYaml = async () => {
             isRuning.value = false;
             return;
         }
-        const resultNew = yaml.load(yamlText);
+        const resultNew = jsyaml.load(yamlText);
         result = { ...result, ...resultNew };
         // console.log("Parsed JSON:", JSON.stringify(result));
 
