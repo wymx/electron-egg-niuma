@@ -2,8 +2,8 @@
     <div style="display: flex;flex-direction: column;">
         <div style="display: flex;align-items: center;">
             <div style="display: flex;flex-direction: column;">
-                <div>牛马</div>
-                <div>工具</div>
+                <div>总提报：{{ numberResult.t2 }}</div>
+                <div>未处理：{{ numberResult.t4 }}</div>
             </div>
             <div v-for="(item, index) in allTemples" :key="item"
                 style="display: flex;flex-direction: column;margin-left: 8px;">
@@ -24,15 +24,15 @@
                 style="height: 100%;width: 50%;resize: none; text-align: left;" />
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
-                    <div>
+                    <div style="display: flex;flex-direction: row;justify-content: space-around;">
                         <input type="text" placeholder="请输入手机号" v-model="result.mobile" />
                         <input type="password" placeholder="请输入密码" v-model="result.password" />
                     </div>
-                    <div>
+                    <!-- <div>
                         <input type="password" placeholder="ai的key，为空不使用AI" v-model="result.aiKey" />
                         <input type="text" placeholder="ai的模型" v-model="result.aiModel" />
                         <input type="text" placeholder="为空则使用https://api.openai.com" v-model="result.apiUrl" />
-                    </div>
+                    </div> -->
                 </div>
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
@@ -46,23 +46,23 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, useMessageOllama } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
-import { yaml,yamlLanguage } from '@codemirror/lang-yaml'
+import { yaml, yamlLanguage } from '@codemirror/lang-yaml'
 import { autocompletion } from '@codemirror/autocomplete'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight' // 语法高亮标签
 
 // 创建高亮样式（优先级高于theme）
 const yamlHighlight = HighlightStyle.define([
-  { tag: tags.propertyName, color: "#000" }, // 属性名✅
-  { tag: tags.string, color: "#cb8748" },       // 字符串✅
-  { tag: tags.comment, color: "#aaa" },      // 注释✅
-  { tag: tags.number, color: "#0185ca" },       //
-  { tag: tags.bool, color: "#d7cd61" }          //
+    { tag: tags.propertyName, color: "#000" }, // 属性名✅
+    { tag: tags.string, color: "#cb8748" },       // 字符串✅
+    { tag: tags.comment, color: "#aaa" },      // 注释✅
+    { tag: tags.number, color: "#0185ca" },       //
+    { tag: tags.bool, color: "#d7cd61" }          //
 ])
 
 // const yamlHighlight = HighlightStyle.define([
@@ -75,10 +75,10 @@ const yamlHighlight = HighlightStyle.define([
 
 // 配置顺序调整
 const extensions = [
-  EditorView.lineWrapping,
-  autocompletion(),
-  yaml(),
-  syntaxHighlighting(yamlHighlight), // 添加语法高亮
+    EditorView.lineWrapping,
+    autocompletion(),
+    yaml(),
+    syntaxHighlighting(yamlHighlight), // 添加语法高亮
 ]
 
 
@@ -157,7 +157,6 @@ const parseYaml = async () => {
             return;
         }
         // console.log("Parsed JSON:", JSON.stringify(result));
-
         localStorage.setItem("allResult", JSON.stringify(result))
 
         addLinfo("开始登录");
@@ -165,6 +164,8 @@ const parseYaml = async () => {
             mobile: result.mobile,
             password: result.password
         });
+        localStorage.setItem("usertoken", response)
+
         if (response) {
             addLinfo("登录成功", 'success');
             addLinfo("开始获取登录信息");
@@ -314,6 +315,7 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
     } finally {
         isRuning.value = false;
         isStopped.value = false;
+        getNumberInfo();
     }
 
 };
@@ -363,6 +365,25 @@ const closeApp = () => {
     const { ipcRenderer } = require('electron');
     ipcRenderer.send('app-quit');
 }
+
+
+// 登录信息进行请求
+var numberResult = reactive({ t1: 0, t2: 0, t3: 0, t4: 0, t5: 0, t6: 0, t7: 0 });
+// 通过token获取数量信息
+const getNumberInfo = async () => {
+    try {
+        const tocken = localStorage.getItem("usertoken") || "";
+        if (!tocken) {
+            Object.assign(numberResult, { t2: "未登录", t4: "未登录" });
+            return;
+        }
+        const numberData = await numberInfo(tocken);
+        Object.assign(numberResult, numberData);
+    } catch (e) {
+        console.error("获取数量信息失败:", e);
+    }
+};
+getNumberInfo();
 
 
 </script>

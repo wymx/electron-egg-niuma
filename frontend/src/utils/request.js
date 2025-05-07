@@ -15,17 +15,20 @@ var inSubmit = false; //是否正在提交清单
 //   grant_type: "official",
 // };
 
+const BASE_URL = "https://dida.homedo.com";
 // 认证配置
 const API_CONFIG = {
-  LOGIN_URL: "https://dida.homedo.com/api/oauth/Login",
-  CURRENT_USER_URL: "https://dida.homedo.com/api/oauth/CurrentUser",
-  USER_ONE_URL:
-    "https://dida.homedo.com/api/permission/Users/ImUser/Selector/0",
-  USER_INFO_URL: "https://dida.homedo.com/api/permission/Users",
-  SUBMIT_URL:
-    "https://dida.homedo.com/api/visualdev/OnlineDev/537986998195978437",
-  PREVIEW_URL: "https://dida.homedo.com/api/system/DataInterface",
-  BATCHPUSH_URL: "https://dida.homedo.com/api/usual/fiveInventory/batchPush",
+  LOGIN_URL: BASE_URL + "/api/oauth/Login", //登录
+  CURRENT_USER_URL: BASE_URL + "/api/oauth/CurrentUser", //获取当前用户信息
+  USER_ONE_URL: BASE_URL + "/api/permission/Users/ImUser/Selector/0", //获取特定用户信息
+  USER_INFO_URL: BASE_URL + "/api/permission/Users", //获取用户信息
+  SUBMIT_URL: BASE_URL + "/api/visualdev/OnlineDev/537986998195978437", //提交信息
+  PREVIEW_URL: BASE_URL + "/api/system/DataInterface", //预览信息
+  BATCHPUSH_URL: BASE_URL + "/api/usual/fiveInventory/batchPush", //批量推送
+  LISTALL_URL:
+    BASE_URL + "/api/system/DataInterface/574601696513187333/Actions/Preview", //获取总数量
+  LISTNUM_URL:
+    BASE_URL + "/api/system/DataInterface/574601712539622917/Actions/Preview", //获取其他数量
 };
 
 async function loginUser(data) {
@@ -53,7 +56,7 @@ async function loginUser(data) {
     const body = `account=${account}&password=${encodeURIComponent(
       password
     )}&code=&origin=bpm&timestamp=0&jnpf_ticket=&grant_type=bpm`;
-    console.log(body, "loginUser body");
+    // console.log(body, "loginUser body");
 
     const response = await axios.post(API_CONFIG.LOGIN_URL, body, { headers });
     var res = response.data;
@@ -62,7 +65,7 @@ async function loginUser(data) {
 
     if (response.data.code == 200) {
       usertoken = response.data.data.token;
-      return true;
+      return usertoken;
     } else {
       return false;
     }
@@ -315,6 +318,54 @@ async function submitPreview(aid, nos, tokens) {
   }
 }
 
+// 获取当前数量
+async function numberInfo(tokens) {
+  try {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const date = String(currentDate.getDate()).padStart(2, "0");
+    const formattedDateM = `${year}-${month}`;
+    const formattedDateD = `${formattedDateM}-${date}`;
+
+    let data = JSON.stringify({
+      paramList: [
+        { field: "begDate", defaultValue: `${formattedDateM}-01 00:00:00` },
+        { field: "endDate", defaultValue: `${formattedDateD} 23:59:59` },
+      ],
+    });
+    let config1 = {
+      method: "post",
+      url: `${API_CONFIG.LISTALL_URL}`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response1 = await axios.request(config1);
+
+    let config2 = {
+      method: "post",
+      url: `${API_CONFIG.LISTNUM_URL}`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+
+    const response2 = await axios.request(config2);
+    var backData = {
+      t1: response1.data.data.t1, //总五项清单数目
+      t2: response1.data.data.t2, //总提报条数
+      t3: response1.data.data.t3, //被提报条数
+      t4: response2.data.data.t1, //未完成条数
+      t5: response2.data.data.t2, //已完成条数
+      t6: response2.data.data.t3, //延期完成条数
+      t7: response2.data.data.t4, //按时完成条数
+    };
+    return backData;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return { t1: 0, t2: 0, t3: 0, t4: 0, t5: 0, t6: 0, t7: 0 };
+  }
+}
+
 async function batchPush(fiveInventoryId, taskId, tokens) {
   try {
     let data = {
@@ -494,4 +545,5 @@ export {
   submitUrl,
   useMessageAI,
   useMessageOllama,
+  numberInfo,
 };
