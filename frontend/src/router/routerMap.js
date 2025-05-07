@@ -6,7 +6,7 @@
 const constantRouterMap = [
   {
     path: '/',
-    name: 'Example',
+    name: '',
     redirect: { name: 'hello' },
     children: [
       // {
