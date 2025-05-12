@@ -29,7 +29,7 @@ const template = [
       { label: "撤销", accelerator: "CmdorCtrl+Z", role: "undo" },
       { label: "剪切", accelerator: "CmdorCtrl+X", role: "cut" },
       { label: "粘贴", accelerator: "CmdorCtrl+V", role: "paste" },
-      { label: "全选", accelerator: "CmdorCtrl+A", role: "selectAll" },,
+      { label: "全选", accelerator: "CmdorCtrl+A", role: "selectAll" },
       { label: "刷新", accelerator: "CmdorCtrl+R", role: "reload" },
       {
         label: "退出",
@@ -69,6 +69,46 @@ ipcMain.on("app-quit", () => {
   const { app } = require("electron");
   app.quit();
 });
+
+const { net } = require('electron')
+ipcMain.handle('api-request', async (event, { url, method, data, token }) => {
+  const request = net.request({
+    method,
+    url: `https://dida.homedo.com${url}`,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token
+    }
+  })
+  
+  return new Promise((resolve) => {
+    let body = ''
+    request.on('response', (response) => {
+      response.on('data', (chunk) => body += chunk)
+      response.on('end', () => resolve(JSON.parse(body)))
+    })
+    request.end(JSON.stringify(data))
+  })
+})
+
+ipcMain.handle('api-user-request', async (event, { url, method, data, token }) => {
+  const request = net.request({
+    method,
+    url: url,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  
+  return new Promise((resolve) => {
+    let body = ''
+    request.on('response', (response) => {
+      response.on('data', (chunk) => body += chunk)
+      response.on('end', () => resolve(JSON.parse(body)))
+    })
+    request.end(JSON.stringify(data))
+  })
+})
 
 // run
 app.run();

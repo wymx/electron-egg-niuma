@@ -29,6 +29,11 @@ const API_CONFIG = {
     BASE_URL + "/api/system/DataInterface/574601696513187333/Actions/Preview", //获取总数量
   LISTNUM_URL:
     BASE_URL + "/api/system/DataInterface/574601712539622917/Actions/Preview", //获取其他数量
+  TASK_LIST_URL: BASE_URL + "/api/usual/MeetingTaskFulfill/getList", //未处理的列表
+  ASK_QD_URL:
+    BASE_URL + "/api/system/DataInterface/540537303597120133/Actions/Preview", //回复
+  ASK_PJ_URL:
+    BASE_URL + "/api/system/DataInterface/540538275006315141/Actions/Preview", //评价
 };
 
 async function loginUser(data) {
@@ -366,6 +371,107 @@ async function numberInfo(tokens) {
   }
 }
 
+// 获取未处理的数量
+async function needList(tokens, param) {
+  try {
+    param = param || {
+      currentPage: 1,
+      pageSize: 1,
+    };
+
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-request", {
+      url: "/api/usual/MeetingTaskFulfill/getList",
+      method: "POST",
+      data: param,
+      token: tokens,
+    });
+    // console.log("111获取数量信息:", response);
+    var pagination = response.data.pagination;
+    if (pagination.total > response.data.list.length) {
+      param.pageSize = pagination.total;
+      response = await ipcRenderer.invoke("api-request", {
+        url: "/api/usual/MeetingTaskFulfill/getList",
+        method: "POST",
+        data: param,
+        token: tokens,
+      });
+      // console.log("2222获取数量信息:", response);
+    }
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null;
+  }
+}
+
+//回复
+async function askPreview(invId, askMsg, tokens) {
+  try {
+    let data = JSON.stringify({
+      paramList: [
+        { field: "task_progress" },
+        { field: "task_fulfil_description", defaultValue: askMsg },
+        { field: "file_url" },
+        { field: "status", defaultValue: 1 },
+        { field: "invId", defaultValue: invId },
+        { field: "invStatus", defaultValue: 4 },
+      ],
+    });
+    let config = {
+      method: "post",
+      url: `${API_CONFIG.ASK_QD_URL}`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data.data, `回复11111`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+// 评价
+async function pjPreview(invId, tokens) {
+  try {
+    let data = JSON.stringify({
+      paramList: [
+        { field: "invId", defaultValue: invId },
+        { field: "type", defaultValue: "0" },
+      ],
+    });
+    let config = {
+      method: "post",
+      url: `${API_CONFIG.ASK_PJ_URL}`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data.data, `评价22222`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+// 评价
+async function askUserList() {
+  try {
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-user-request", {
+      url: `https://wxqd.ymiss.site/userList.json`,
+      method: "GET",
+      data: {}
+    });
+    // console.log("获取用户列表信息:", response);
+    return response;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
 async function batchPush(fiveInventoryId, taskId, tokens) {
   try {
     let data = {
@@ -546,4 +652,8 @@ export {
   useMessageAI,
   useMessageOllama,
   numberInfo,
+  needList,
+  askPreview,
+  pjPreview,
+  askUserList,
 };

@@ -15,6 +15,7 @@
             </div>
             <button style="margin-left: 8px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
             <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
+            <div v-show="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
@@ -46,7 +47,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 
 import { Codemirror } from 'vue-codemirror'
@@ -56,6 +57,26 @@ import { autocompletion } from '@codemirror/autocomplete'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight' // 语法高亮标签
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter();
+
+const gotoAsk = () => {
+    if (!result.mobile || result.mobile.length < 1) {
+        alert("没有手机号");
+        return false;
+    }
+    if (!result.password || result.password.length < 1) {
+        alert("没有密码");
+        return false;
+    }
+    const menuInfo = {
+        name: "HomeAutoAsk",
+        query: { mobile: result.mobile, password: result.password }
+    }
+    router.push(menuInfo);
+}
+
 // 创建高亮样式（优先级高于theme）
 const yamlHighlight = HighlightStyle.define([
     { tag: tags.propertyName, color: "#000" }, // 属性名✅
@@ -64,14 +85,6 @@ const yamlHighlight = HighlightStyle.define([
     { tag: tags.number, color: "#0185ca" },       //
     { tag: tags.bool, color: "#d7cd61" }          //
 ])
-
-// const yamlHighlight = HighlightStyle.define([
-//   { tag: tags.propertyName, color: "#0185ca" }, // 属性名✅
-//   { tag: tags.string, color: "#cb8748" },       // 字符串✅
-//   { tag: tags.comment, color: "#d7cd61" },      // 注释✅
-//   { tag: tags.number, color: "#f00" },       //
-//   { tag: tags.bool, color: "#0ff" }          //
-// ])
 
 // 配置顺序调整
 const extensions = [
@@ -107,6 +120,8 @@ const password = ref(allData.password || "");
 const infoList = ref("");
 const styledInfoList = ref("");
 const isRuning = ref(false);
+let showAsk = ref(false);
+var userList = reactive([]);
 
 var changeText = submitQingdan;
 var result = reactive(jsyaml.load(changeText));
@@ -169,6 +184,11 @@ const parseYaml = async () => {
         if (response) {
             addLinfo("登录成功", 'success');
             addLinfo("开始获取登录信息");
+            
+            userList = await askUserList();
+            showAsk = userList.some(item => item.mobile === result.mobile);
+
+
             const response = await currentUserInfo();
             if (response) {
                 addLinfo("获取登录信息成功", 'success');
@@ -384,6 +404,8 @@ const getNumberInfo = async () => {
     }
 };
 getNumberInfo();
+
+
 
 
 </script>
