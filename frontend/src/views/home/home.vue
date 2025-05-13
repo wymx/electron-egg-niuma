@@ -13,9 +13,9 @@
                     <button @click="deleteTemple(index)">删除</button>
                 </div>
             </div>
-            <button style="margin-left: 8px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
+            <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
             <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
-            <div v-show="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</div>
+            <div v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
@@ -167,6 +167,9 @@ const parseYaml = async () => {
         result = { ...result, ...resultNew };
         // console.log("Parsed JSON:", JSON.stringify(result));
 
+        result.toUser = result.submitBodyInfo.map(item => Object.keys(item)[0]);
+        result.submitBody = result.submitBodyInfo.map(item => Object.values(item)[0]);
+
         if (!checkInput(result)) {
             isRuning.value = false;
             return;
@@ -184,10 +187,7 @@ const parseYaml = async () => {
         if (response) {
             addLinfo("登录成功", 'success');
             addLinfo("开始获取登录信息");
-            
-            userList = await askUserList();
-            showAsk = userList.some(item => item.mobile === result.mobile);
-
+            getUserListShowAsk();
 
             const response = await currentUserInfo();
             if (response) {
@@ -255,58 +255,49 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
         if (stopRequest) {
             addLinfo("已请求停止执行", 'warning');
             throw new Error("用户主动中止循环");
-        }
+        } else {
 
-        const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
-        addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
-        const submitAndLog = async (userIndex, itemIndex) => {
-            // const bodyInfo = qdconfig.submitBody[currentIndex];
-            // addLinfo("开始提交：" + bodyInfo);
-            const bodyInfo = qdconfig.submitBody[userIndex][itemIndex];
-            const targetUser = qdconfig.toUser[userIndex];
-            addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务`);
+            const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
+            addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
+            const submitAndLog = async (userIndex, itemIndex) => {
+                // const bodyInfo = qdconfig.submitBody[currentIndex];
+                // addLinfo("开始提交：" + bodyInfo);
+                const bodyInfo = qdconfig.submitBody[userIndex][itemIndex];
+                const targetUser = qdconfig.toUser[userIndex];
+                addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务`);
 
-            var aiBackInfo = bodyInfo;
-            if (qdconfig.aiKey.length) {
-                addLinfo("使用AI进行处理");
-                var resultInfo = await useMessageAI(bodyInfo, qdconfig);
-                if (resultInfo && resultInfo.choices && resultInfo.choices.length > 0) {
-                    aiBackInfo = resultInfo.choices[0].message.content;
-                    addLinfo("AI返回信息：" + aiBackInfo);
-                } else {
-                    addLinfo("AI返回数据异常，使用默认值");
-                }
-            }
-            var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
-            addLinfo(submitStr, 'success');
-            if (submitStr.indexOf("没有找到touser用户信息") != -1) {
-                throw new Error("找不到接收人");
-            } else if (submitStr.indexOf("没有找到用户信息") != -1) {
-                throw new Error("没有找到用户信息");
-            } else if (submitStr.indexOf("提交失败") != -1) {
-                throw new Error("提交失败了，稍后尝试");
-            }
-        };
-
-        const executeStrategies = {
-            userSequence: async () => {
-                for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
-                    const userTasks = qdconfig.submitBody[userIndex];
-                    for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
-                        if (isRuning.value) {
-                            await submitAndLog(userIndex, itemIndex);
-                            await new Promise(resolve => setTimeout(resolve, interval));
-                        } else {
-                            return;
-                        }
+                var aiBackInfo = bodyInfo;
+                if (qdconfig.aiKey.length) {
+                    addLinfo("使用AI进行处理");
+                    var resultInfo = await useMessageAI(bodyInfo, qdconfig);
+                    if (resultInfo && resultInfo.choices && resultInfo.choices.length > 0) {
+                        aiBackInfo = resultInfo.choices[0].message.content;
+                        addLinfo("AI返回信息：" + aiBackInfo);
+                    } else {
+                        addLinfo("AI返回数据异常，使用默认值");
                     }
                 }
-            },
-            itemCross: async () => {
-                const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
-                for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+                var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
+
+                if (submitStr.indexOf("没有找到touser用户信息") != -1) {
+                    addLinfo(submitStr, 'error');
+                    throw new Error("找不到接收人");
+                } else if (submitStr.indexOf("没有找到用户信息") != -1) {
+                    addLinfo(submitStr, 'error');
+                    throw new Error("没有找到用户信息");
+                } else if (submitStr.indexOf("提交失败") != -1) {
+                    addLinfo(submitStr, 'error');
+                    throw new Error("提交失败了，稍后尝试");
+                } else {
+                    addLinfo(submitStr, 'success');
+                }
+            };
+
+            const executeStrategies = {
+                userSequence: async () => {
                     for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
-                        if (itemIndex < qdconfig.submitBody[userIndex].length) {
+                        const userTasks = qdconfig.submitBody[userIndex];
+                        for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
                             if (isRuning.value) {
                                 await submitAndLog(userIndex, itemIndex);
                                 await new Promise(resolve => setTimeout(resolve, interval));
@@ -315,23 +306,38 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                             }
                         }
                     }
+                },
+                itemCross: async () => {
+                    const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
+                    for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+                        for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
+                            if (itemIndex < qdconfig.submitBody[userIndex].length) {
+                                if (isRuning.value) {
+                                    await submitAndLog(userIndex, itemIndex);
+                                    await new Promise(resolve => setTimeout(resolve, interval));
+                                } else {
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
-            }
-        };
+            };
 
-        if (qdconfig.executeMode === "userSequence") {
-            await executeStrategies.userSequence();
-        } else {
-            await executeStrategies.itemCross();
+            if (qdconfig.executeMode === "userSequence") {
+                await executeStrategies.userSequence();
+            } else {
+                await executeStrategies.itemCross();
+            }
+            addLinfo("所有提交已结束，请重新配置");
         }
-        addLinfo("所有提交已完成，请重新配置");
     } catch (e) {
         if (e.message.includes("中止循环")) {
             addLinfo(e.message, 'error');
         } else {
+            addLinfo("" + "" + e.message, 'error');
             throw e; // 其他异常继续抛出
         }
-        addLinfo("" + "" + e.message, 'error');
     } finally {
         isRuning.value = false;
         isStopped.value = false;
@@ -404,9 +410,16 @@ const getNumberInfo = async () => {
     }
 };
 getNumberInfo();
+const getUserListShowAsk = async () => {
+    try {
+        userList = await askUserList();
+        showAsk = userList.some(item => item.mobile === result.mobile);
+    } catch (e) {
+        console.error("获取用户列表失败:", e);
+    }
+};
 
-
-
+getUserListShowAsk();
 
 </script>
 <style scoped>

@@ -118,14 +118,14 @@ const checkInput = (result) => {
     return true;
 };
 
-const addLinfo = (info, type = 'info',addtime = true) => {
+const addLinfo = (info, type = 'info', addtime = true) => {
     const colors = {
         error: 'red',
         success: 'green',
         warning: 'orange',
         info: '#333'
     };
-    const newLine = `<span style="color: ${colors[type]}">${info} ${addtime?nowTimestr():""}</span>`;
+    const newLine = `<span style="color: ${colors[type]}">${info} ${addtime ? nowTimestr() : ""}</span>`;
     styledInfoList.value = styledInfoList.value
         ? `${styledInfoList.value}<br>${newLine}`
         : newLine;
@@ -144,6 +144,11 @@ var allList = reactive([]);
 // 通过token获取数量信息
 const getNumberInfo = async () => {
     try {
+
+        askList = reactive([]);
+        pjList = reactive([]);
+        allList = reactive([]);
+        
         const tocken = localStorage.getItem("usertoken") || "";
         if (!tocken) {
             return;
@@ -186,45 +191,54 @@ const checkList = async (askconfig) => {
         const tocken = localStorage.getItem("usertoken") || "";
         if (!tocken) {
             addLinfo("没有token", 'error');
+            isRuning.value = false;
             return;
         }
+        styledInfoList.value = "";
         const interval = 1000 * 60 * askconfig.refTime; // 分钟的间隔
         addLinfo(`定时器间隔：${askconfig.refTime}分钟`);
 
         for (const [index, item] of allList.entries()) {
             if (askconfig.dealNum > 0 && index >= askconfig.dealNum) {
                 addLinfo("到达指定数量，停止执行");
+                isRuning.value = false;
                 break;
             } else {
+                isRuning.value = true;
                 const invId = item.iveId;
-                addLinfo(`${item.logInfo}-第${index + 1}个:${invId}\n${item.body.trim().slice(0, 10)}...`, 'info',false);
+                addLinfo(`${item.logInfo}-第${index + 1}个:${invId}\n${item.body.trim().slice(0, 20)}...`, 'info', false);
                 try {
                     if (item.isAsk) {
                         const randomIndex = Math.floor(Math.random() * askconfig.answer.length);
                         const selectedAnswer = askconfig.answer[randomIndex];
                         addLinfo("随机回复内容:" + selectedAnswer);
                         if (!askconfig.submitTest) {
-                            const response = await askPreview(invId, selectedAnswer, tocken);
+                            const response = await askPreview(item, selectedAnswer, tocken);
                             addLinfo("处理结果:" + JSON.stringify(response));
                         }
                     } else {
                         if (!askconfig.submitTest) {
-                            const response = await pjPreview(invId, tocken);
+                            const response = await pjPreview(item, tocken);
                             console.log("评分结果:", response);
                         }
                     }
                 } catch (error) {
                     addLinfo(`处理失败: ${error.message}`, 'error');
                 }
-                await new Promise(resolve => setTimeout(resolve, interval)); // 等待间隔
+                if (index != allList.length - 1 && index + 1 < askconfig.dealNum) {
+                    await new Promise(resolve => setTimeout(resolve, interval)); // 等待间隔
+                }
             }
         }
     } catch (error) {
         addLinfo(`操作失败: ${error.message}`, 'error')
+    } finally {
+        isRuning.value = false;
+        getNumberInfo();
+
     }
+
 };
-
-
 
 </script>
 <style scoped>

@@ -406,7 +406,7 @@ async function needList(tokens, param) {
 }
 
 //回复
-async function askPreview(invId, askMsg, tokens) {
+async function askPreview(item, askMsg, tokens) {
   try {
     let data = JSON.stringify({
       paramList: [
@@ -414,7 +414,7 @@ async function askPreview(invId, askMsg, tokens) {
         { field: "task_fulfil_description", defaultValue: askMsg },
         { field: "file_url" },
         { field: "status", defaultValue: 1 },
-        { field: "invId", defaultValue: invId },
+        { field: "invId", defaultValue: item.iveId },
         { field: "invStatus", defaultValue: 4 },
       ],
     });
@@ -425,19 +425,65 @@ async function askPreview(invId, askMsg, tokens) {
       data: data,
     };
     const response = await axios.request(config);
-    console.log(response.data.data, `回复11111`);
+    const submitInfo = await askDEtialIdPreview(item.iveId, tokens);
+    if (submitInfo && submitInfo.taskId) {
+      await askSubmitPreview(submitInfo.taskId, tokens);
+    }
+    console.log(response.data.data, `回复成功111`);
     return response.data.data;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
   }
 }
+
+// 获取taskId
+async function askDEtialIdPreview(itemId, tokens) {
+  try {
+    //437571
+    let data = JSON.stringify({
+      paramList: [{ field: "invId", defaultValue: itemId }],
+    });
+    let config = {
+      method: "post",
+      url: `https://dida.homedo.com/api/system/DataInterface/540502795636238149/Actions/Preview`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data.data, `任务详情------`);
+    return response.data.data[0];
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+//回复提交
+async function askSubmitPreview(itemId, tokens) {
+  try {
+    let data = JSON.stringify({});
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-request", {
+      url: `/api/usual/fiveInventory/updateFiveInventoryTaskStatus/${itemId}`,
+      method: "POST",
+      data: data,
+      token: tokens,
+    });
+    console.log(response, `提交------`);
+    return response;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
 // 评价
-async function pjPreview(invId, tokens) {
+async function pjPreview(item, tokens) {
   try {
     let data = JSON.stringify({
       paramList: [
-        { field: "invId", defaultValue: invId },
+        { field: "invId", defaultValue: item.iveId },
         { field: "type", defaultValue: "0" },
       ],
     });
@@ -462,7 +508,7 @@ async function askUserList() {
     var response = await ipcRenderer.invoke("api-user-request", {
       url: `https://wxqd.ymiss.site/userList.json`,
       method: "GET",
-      data: {}
+      data: {},
     });
     // console.log("获取用户列表信息:", response);
     return response;
