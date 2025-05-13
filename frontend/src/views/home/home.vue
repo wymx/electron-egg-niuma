@@ -1,21 +1,39 @@
 <template>
     <div style="display: flex;flex-direction: column;">
-        <div style="display: flex;align-items: center;">
-            <div style="display: flex;flex-direction: column;">
-                <div>总提报：{{ numberResult.t2 }}</div>
+        <div style="display: flex;align-items: center;justify-content: space-between;">
+            <div style="display: flex;flex-direction: column;align-items: flex-start;min-width: 100px;">
+                <div style="display: flex;align-items: center;">
+                    <div>总提报：</div>
+                    <a-progress type="dashboard" :percent="percent" :size="30">
+                        <template #format="percent">
+                            <span style="font-size: 15px">{{ numberResult.t2 }}</span>
+                        </template>
+                    </a-progress>
+                </div>
+                <!-- <div>总提报：{{ numberResult.t2 }}</div> -->
                 <div>未处理：{{ numberResult.t4 }}</div>
             </div>
-            <div v-for="(item, index) in allTemples" :key="item"
-                style="display: flex;flex-direction: column;margin-left: 8px;">
-                <input type="text" v-model="item.name" style="width:80px;margin-right:5px" @blur="saveLocalStorage" />
-                <div style="display: flex;flex-direction: row;justify-content: space-around;">
-                    <button @click="useTemple(index)">使用</button>
-                    <button @click="deleteTemple(index)">删除</button>
+            <div style="display: flex;align-items: center;width: 80%;text-align: left;">
+                <div v-for="(item, index) in allTemples" :key="item"
+                    style="display: flex;flex-direction: column;margin-left: 8px;width:100px">
+                    <a-input type="text" v-model:value="item.name" style="width:100%;margin-right:5px"
+                        @blur="saveLocalStorage" />
+                    <div style="display: flex;flex-direction: row;justify-content: space-between;margin-top: 5px;">
+                        <a-button type="primary" size="small" @click="useTemple(index)">使用</a-button>
+                        <a-button type="primary" size="small" danger @click="deleteTemple(index)">删除</a-button>
+                    </div>
                 </div>
+                <a-button type="primary" size="small" @click="saveCurrentTemple"
+                    style="white-space: normal; word-break: break-all; max-width: 86px; height: auto;margin-left: 20px;">保存当前配置为模版</a-button>
+                <!-- <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button> -->
             </div>
-            <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
-            <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
-            <button v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</button>
+
+            <div style="display: flex;flex-direction: column;">
+                <a-button v-if="showAsk" type="primary" size="small" @click="gotoAsk">跳转回复</a-button>
+                <!-- <a-button type="primary" size="small" danger @click="closeApp">退出程序</a-button> -->
+                <!-- <button v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</button> -->
+                <!-- <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出程序</button> -->
+            </div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
@@ -26,8 +44,19 @@
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
                     <div style="display: flex;flex-direction: row;justify-content: space-around;">
-                        <input type="text" placeholder="请输入手机号" v-model="result.mobile" />
-                        <input type="password" placeholder="请输入密码" v-model="result.password" />
+                        <!-- <input type="text" placeholder="请输入手机号" v-model="result.mobile" /> -->
+                        <!-- <input type="password" placeholder="请输入密码" v-model="result.password" /> -->
+                        <a-input v-model:value="result.mobile" placeholder="Basic usage">
+                            <template #prefix>
+                                <user-outlined />
+                            </template>
+                            <!-- <template #suffix>
+                                <a-tooltip title="手机号">
+                                    <info-circle-outlined style="color: rgba(0, 0, 0, 0.45)" />
+                                </a-tooltip>
+                            </template> -->
+                        </a-input>
+                        <a-input-password v-model:value="result.password" placeholder="input password" />
                     </div>
                     <!-- <div>
                         <input type="password" placeholder="ai的key，为空不使用AI" v-model="result.aiKey" />
@@ -37,19 +66,22 @@
                 </div>
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
-                <button @click="parseYaml" :disabled="isRuning">开始执行</button>
-                <button v-show="isRuning" @click="submitTimer(result, true)">停止执行</button>
+                <!-- <button @click="parseYaml" :disabled="isRuning">开始执行</button> -->
+                <!-- <button v-show="isRuning" @click="submitTimer(result, true)">停止执行</button> -->
+                <a-button type="primary" @click="parseYaml" :disabled="isRuning">开始执行</a-button>
+                <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button>
             </div>
         </div>
     </div>
 
 </template>
 <script setup>
-import { ref, reactive } from 'vue'
+import { UserOutlined } from '@ant-design/icons-vue';
+
+import { ref, reactive, watch } from 'vue'
 import jsyaml from 'js-yaml';
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
-
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
 import { yaml, yamlLanguage } from '@codemirror/lang-yaml'
@@ -58,7 +90,6 @@ import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight' // 语法高亮标签
 
 import { useRouter } from 'vue-router'
-
 const router = useRouter();
 
 const gotoAsk = () => {
@@ -120,6 +151,7 @@ const password = ref(allData.password || "");
 const infoList = ref("");
 const styledInfoList = ref("");
 const isRuning = ref(false);
+
 let showAsk = ref(false);
 var userList = reactive([]);
 
@@ -131,22 +163,26 @@ result.apiUrl = apiUrl.value;
 result.mobile = mobile.value;
 result.password = password.value;
 
-
 const refTime = ref(allData.refTime || 1);//时间间隔
 const area = ref(allData.area || "FY");
 const level = ref(allData.level || "C");
 const executeMode = ref(allData.executeMode || "");//发送方式
+const submitNumber = ref(allData.submitNumber || 1);//提交数量
+const percent = ref(0);//提交数量
 
 result.refTime = refTime.value;
 result.area = area.value;
 result.level = level.value;
 result.executeMode = executeMode.value;
+result.submitNumber = submitNumber.value;
 
 //将保存的信息显示到左侧输入框中
 changeText = changeText.replace('refTime: ', `refTime: ${result.refTime}`);
 changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
-changeText = changeText.replace('executeMode: ""', `level: "${result.executeMode}"`);
+changeText = changeText.replace('executeMode: ""', `executeMode: "${result.executeMode}"`);
+changeText = changeText.replace('submitNumber: ', `submitNumber: ${result.submitNumber}`);
+
 
 const yamlContent = ref(changeText);
 // console.log("result:", result);
@@ -249,9 +285,7 @@ const checkInput = (result) => {
 };
 
 const submitTimer = async (qdconfig, stopRequest = false) => {
-
     try {
-
         if (stopRequest) {
             addLinfo("已请求停止执行", 'warning');
             throw new Error("用户主动中止循环");
@@ -404,12 +438,34 @@ const getNumberInfo = async () => {
             return;
         }
         const numberData = await numberInfo(tocken);
-        Object.assign(numberResult, numberData);
+        Object.assign(numberResult, numberData);;
+        percent.value = (numberResult.t2 / result.submitNumber) * 100;
     } catch (e) {
         console.error("获取数量信息失败:", e);
     }
 };
 getNumberInfo();
+
+watch(
+    () => yamlContent.value,
+    (newVal) => {
+        try {
+            const parsed = jsyaml.load(newVal);
+            const newNumber = Number(parsed?.submitNumber) || 0;
+            result.submitNumber = newNumber; // 更新响应式数据
+            localStorage.setItem("allResult", JSON.stringify(result));
+            // console.log(result.submitNumber, "====");
+            percent.value = (numberResult.t2 / newNumber) * 100;
+        } catch (e) {
+            console.error("YAML解析失败", e);
+        }
+    },
+    { immediate: true },
+    () => numberResult.t2,
+    (newVal) => {
+        percent.value = (newVal / result.submitNumber) * 100;
+    }
+);
 const getUserListShowAsk = async () => {
     try {
         userList = await askUserList();
