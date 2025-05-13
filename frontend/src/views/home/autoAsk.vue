@@ -5,7 +5,7 @@
                 <div class="text-info">需要回复处理：{{ askList.length }}</div>
                 <div class="text-info">需要评分：{{ pjList.length }}</div>
             </div>
-            <div @click="gotoHome" style="margin-left: 20px;">首页</div>
+            <button @click="gotoHome" style="margin-left: 20px;">回首页</button>
             <!-- <router-link :to="{ name: menuInfo.pageName, params: menuInfo.params }">
                 <span>跳转更新</span>
             </router-link> -->

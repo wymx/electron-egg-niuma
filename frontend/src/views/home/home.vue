@@ -15,7 +15,7 @@
             </div>
             <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button>
             <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出</button>
-            <div v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</div>
+            <button v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</button>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"

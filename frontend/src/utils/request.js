@@ -425,6 +425,7 @@ async function askPreview(item, askMsg, tokens) {
       data: data,
     };
     const response = await axios.request(config);
+    await setReadStatus(item.iveId, tokens);
     const submitInfo = await askDEtialIdPreview(item.iveId, tokens);
     if (submitInfo && submitInfo.taskId) {
       await askSubmitPreview(submitInfo.taskId, tokens);
@@ -437,10 +438,36 @@ async function askPreview(item, askMsg, tokens) {
   }
 }
 
+// 设置为已读状态
+async function setReadStatus(itemId, tokens) {
+  try {
+    let data = JSON.stringify({
+      paramList: [
+        {
+          paramList: [
+            { field: "invId", defaultValue: itemId },
+            { field: "status", defaultValue: 2 },
+          ],
+        },
+      ],
+    });
+    let config = {
+      method: "post",
+      url: `https://dida.homedo.com/api/system/DataInterface/636889455445148421/Actions/Preview`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response, `设置已读状态------`);
+    return null;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
 // 获取taskId
 async function askDEtialIdPreview(itemId, tokens) {
   try {
-    //437571
     let data = JSON.stringify({
       paramList: [{ field: "invId", defaultValue: itemId }],
     });
