@@ -5,14 +5,17 @@ const { logger } = require("ee-core/log");
 const { getMainWindow, setCloseAndQuit } = require("ee-core/electron");
 const path = require('path');
 // 设置检测更新的地址
-var httpUrl = "http://localhost:3000/ee/latest-mac.yml";
-// http://kodo.qiniu.com/latest-mac.yml
 // if (!electronApp.isPackaged) {
-//   Object.defineProperty(electronApp, "isPackaged", {
-//   get: () => true,
-//   });
-//   // autoUpdater.forceDevUpdateConfig = true; // 强制使用开发环境的配置文件,期望代替更改isPackaged，以免影响其他业务
+//   // Object.defineProperty(electronApp, "isPackaged", {
+//   // get: () => true,
+//   // });
+//   autoUpdater.forceDevUpdateConfig = true; // 强制使用开发环境的配置文件,期望代替更改isPackaged，以免影响其他业务
 //   autoUpdater.updateConfigPath = path.join(__dirname, "dev-update.yml");
+//   // 添加模拟签名配置
+//   Object.defineProperty(autoUpdater, 'isForceCodeSigning', {
+//     get: () => false,
+//     set: () => {}
+//   });
 // }
   
 
@@ -24,11 +27,11 @@ class AutoUpdaterService {
   constructor() {
     this.config = {
       windows: false,
-      macOS: false,
+      macOS: true,
       linux: false,
       options: {
         provider: "generic",
-        url: "http://localhost:3000/ee/latest-mac.yml",
+        url: "http://localhost:3000/ee/"
       },
     };
   }
@@ -61,10 +64,10 @@ class AutoUpdaterService {
     logger.info("[autoUpdater] current version: ", version);
 
     // 设置下载服务器地址
-    // let server = cfg.options.url;
-    // let lastChar = server.substring(server.length - 1);
-    // server = lastChar === "/" ? server : server + "/";
-    // cfg.options.url = server;
+    let server = cfg.options.url;
+    let lastChar = server.substring(server.length - 1);
+    server = lastChar === "/" ? server : server + "/";
+    cfg.options.url = server;
 
     try {
       autoUpdater.setFeedURL(cfg.options);
@@ -73,10 +76,15 @@ class AutoUpdaterService {
     }
 
     autoUpdater.on("checking-for-update", () => {
-      //sendStatusToWindow('正在检查更新...');
+      const data = {
+        status: status.available,
+        desc: "正在检查更新...",
+      };
+      this.sendStatusToWindow(data);
       console.log("正在检查更新...");
     });
-    autoUpdater.on("update-available", () => {
+    autoUpdater.on("update-available", (info) => {
+      console.log("有可用更新", info);
       const data = {
         status: status.available,
         desc: "有可用更新",

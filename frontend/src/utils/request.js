@@ -428,6 +428,11 @@ async function askPreview(item, askMsg, tokens) {
     await setReadStatus(item.iveId, tokens);
     const submitInfo = await askDEtialIdPreview(item.iveId, tokens);
     if (submitInfo && submitInfo.taskId) {
+      await setReadStatus2(
+        submitInfo.raise_user_id,
+        submitInfo.owner_user_id,
+        tokens
+      );
       await askSubmitPreview(submitInfo.taskId, tokens);
     }
     console.log(response.data.data, `回复成功111`);
@@ -443,12 +448,8 @@ async function setReadStatus(itemId, tokens) {
   try {
     let data = JSON.stringify({
       paramList: [
-        {
-          paramList: [
-            { field: "invId", defaultValue: itemId },
-            { field: "status", defaultValue: 2 },
-          ],
-        },
+        { field: "invId", defaultValue: itemId },
+        { field: "status", defaultValue: 2 },
       ],
     });
     let config = {
@@ -458,7 +459,27 @@ async function setReadStatus(itemId, tokens) {
       data: data,
     };
     const response = await axios.request(config);
-    console.log(response, `设置已读状态------`);
+    // console.log(response, `设置已读状态------`);
+    return null;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+async function setReadStatus2(raise_user_id, owner_user_id, tokens) {
+  try {
+    let data = JSON.stringify({ ids: [raise_user_id] });
+    let data2 = JSON.stringify({ ids: [owner_user_id] });
+    var config = {
+      method: "post",
+      url: `https://dida.homedo.com/api/permission/Users/getUserList`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    config.data = data2;
+    const response2 = await axios.request(config);
+    console.log(response, `设置已读状态------`, response2);
     return null;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -533,11 +554,28 @@ async function askUserList() {
   try {
     const { ipcRenderer } = require("electron");
     var response = await ipcRenderer.invoke("api-user-request", {
-      url: `https://wxqd.ymiss.site/userList.json`,
+      url: `https://wxqd.ymiss.site/userList.json?t=${new Date().getTime()}`,
       method: "GET",
       data: {},
     });
     // console.log("获取用户列表信息:", response);
+    return response;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+// 检查更新
+async function versionCheck() {
+  try {
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-user-request", {
+      url: `https://wxqd.ymiss.site/versionCheck.json?t=${new Date().getTime()}`,
+      method: "GET",
+      data: {},
+    });
+    // console.log("获取versionCheck信息:", response);
     return response;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -726,7 +764,9 @@ export {
   useMessageOllama,
   numberInfo,
   needList,
+  setReadStatus,
   askPreview,
   pjPreview,
   askUserList,
+  versionCheck,
 };

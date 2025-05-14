@@ -1,6 +1,6 @@
 <template>
     <div style="display: flex;flex-direction: column;">
-        <div style="display: flex;align-items: center;justify-content: space-between;">
+        <div style="display: flex;align-items: center;justify-content: space-between;padding-bottom: 8px;">
             <div style="display: flex;flex-direction: column;align-items: flex-start;min-width: 100px;">
                 <div style="display: flex;align-items: center;">
                     <div>总提报：</div>
@@ -24,7 +24,7 @@
                     </div>
                 </div>
                 <a-button type="primary" size="small" @click="saveCurrentTemple"
-                    style="white-space: normal; word-break: break-all; max-width: 86px; height: auto;margin-left: 20px;">保存当前配置为模版</a-button>
+                    style="margin-left: 20px;">保存当前配置为模版</a-button>
                 <!-- <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button> -->
             </div>
 
@@ -77,10 +77,11 @@
 </template>
 <script setup>
 import { UserOutlined } from '@ant-design/icons-vue';
+import { Modal } from 'ant-design-vue';
 
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch,onMounted } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList, versionCheck } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
@@ -153,7 +154,7 @@ const styledInfoList = ref("");
 const isRuning = ref(false);
 
 let showAsk = ref(false);
-var userList = reactive([]);
+var userList = reactive({});
 
 var changeText = submitQingdan;
 var result = reactive(jsyaml.load(changeText));
@@ -444,7 +445,6 @@ const getNumberInfo = async () => {
         console.error("获取数量信息失败:", e);
     }
 };
-getNumberInfo();
 
 watch(
     () => yamlContent.value,
@@ -468,14 +468,54 @@ watch(
 );
 const getUserListShowAsk = async () => {
     try {
-        userList = await askUserList();
-        showAsk = userList.some(item => item.mobile === result.mobile);
+        var userInfo = await askUserList();
+        if (userInfo.showAll) {
+            showAsk.value = true;
+        }else {
+            showAsk = userInfo.userList.some(item => item.mobile === result.mobile);
+        }
     } catch (e) {
         console.error("获取用户列表失败:", e);
     }
 };
+const checkAppVersion = async () => {
+    try {
+        var chckInfo = await versionCheck();
+        if (chckInfo.showPop) {
+            Modal.success({
+                title: chckInfo.title,
+                content: chckInfo.newInfo,
+                okText: chckInfo.okText,
+                okType: chckInfo.okType,
+                okButtonProps: chckInfo.okButtonProps,
+                closable: !chckInfo.mustDown,
+                keyboard: false,
+                maskClosable: false,
+                onOk() {
+                    if (chckInfo.downloadUrl) {
+                        openLink(chckInfo.downloadUrl);
+                    }
+                    checkAppVersion()
+                },
+            });
+        }
+    } catch (e) {
+        console.error("获取用跟新失败:", e);
+    }
+};
 
-getUserListShowAsk();
+const { shell } = require('electron') // 引入 Electron 的 shell 模块
+function openLink(url) {
+    shell.openExternal(url) // 使用 openExternal 方法打开链接
+}
+
+// onMounted(async () => {
+     getNumberInfo();
+     getUserListShowAsk();
+     checkAppVersion()
+// });
+
+
 
 </script>
 <style scoped>

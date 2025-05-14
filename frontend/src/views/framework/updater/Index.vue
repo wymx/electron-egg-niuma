@@ -1,6 +1,9 @@
 <template>
   <div id="app-updater">
     <div class="one-block-1">
+      <div style="display: flex;flex-direction: column;">
+         <a-button type="primary" size="small" @click="gotoAsk">跳转回复</a-button>
+      </div>
       <span>
         1. 自动更新
       </span>
@@ -29,6 +32,18 @@ import { ipc } from '@/utils/ipcRenderer';
 import { ipcApiRoute, specialIpcRoute } from '@/api';
 import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
+
+import { useRouter } from 'vue-router'
+const router = useRouter();
+
+const gotoAsk = () => {
+    const menuInfo = {
+        name: "HomeAutoAsk",
+        query: {}
+    }
+    router.push(menuInfo);
+}
+
 
 const status = ref(0);
 const progress = ref('');

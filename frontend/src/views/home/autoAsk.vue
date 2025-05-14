@@ -5,8 +5,14 @@
                 <div class="text-info">需要回复处理：{{ askList.length }}</div>
                 <div class="text-info">需要评分：{{ pjList.length }}</div>
             </div>
-            <button @click="gotoHome" style="margin-left: 20px;">回首页</button>
-            <!-- <router-link :to="{ name: menuInfo.pageName, params: menuInfo.params }">
+            <div style="margin-left: 20px;">
+                <div class="text-info">已读：{{ readNumber }}</div>
+                <div class="text-info">未读：{{ readNoNumber }}</div>
+            </div>
+            <!-- <button @click="gotoHome" style="margin-left: 20px;">回首页</button> -->
+            <a-button type="primary" size="small" @click="gotoHome" style="margin-left: 20px;">回首页</a-button>
+            <!-- <a-button type="primary" size="small" @click="gotoDownload" style="margin-left: 20px;">跳转更新(暂不可用)</a-button> -->
+            <!-- <router-link :to="{ name: menuInfo.pageName, params: menuInfo.params }" style="margin-left: 20px;">
                 <span>跳转更新</span>
             </router-link> -->
         </div>
@@ -27,7 +33,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, needList, askPreview, pjPreview } from '../../utils/request.js'
+import { loginUser, needList, askPreview, pjPreview, setReadStatus } from '../../utils/request.js'
 import { askData } from '../../utils/askData.js'
 
 import { Codemirror } from 'vue-codemirror'
@@ -48,9 +54,13 @@ const mobile = ref(route.query.mobile);
 const password = ref(route.query.password);
 
 const menuInfo = {
-    pageName: "FrameworkUpdaterIndex",
+    name: "FrameworkUpdaterIndex",
     params: {}
 }
+const gotoDownload = () => {
+    router.push(menuInfo);
+}
+
 // 创建高亮样式（优先级高于theme）
 const yamlHighlight = HighlightStyle.define([
     { tag: tags.propertyName, color: "#000" }, // 属性名✅
@@ -141,6 +151,9 @@ const nowTimestr = () => {
 var askList = reactive([]);
 var pjList = reactive([]);
 var allList = reactive([]);
+var readNumber = ref(0);
+var readNoNumber = ref(0);
+
 // 通过token获取数量信息
 const getNumberInfo = async () => {
     try {
@@ -148,7 +161,9 @@ const getNumberInfo = async () => {
         askList = reactive([]);
         pjList = reactive([]);
         allList = reactive([]);
-        
+        readNumber = ref(0);
+        readNoNumber = ref(0);
+
         const tocken = localStorage.getItem("usertoken") || "";
         if (!tocken) {
             return;
@@ -164,18 +179,23 @@ const getNumberInfo = async () => {
             // 重新获取数量信息
             getNumberInfo();
         }
-        console.log("获取数量信息333:", numberData);
+        // console.log("获取数量信息333:", numberData);
         var list = numberData.list;
-
-        list.forEach((item) => {
+        list.forEach(async (item) => {
             if (item.type == '任务待解决-五项清单') {
                 item.logInfo = "回复";
                 item.isAsk = true;
                 askList.push(item);
+                await setReadStatus(item.iveId, tocken);
             } else if (item.type == '任务待评分') {
                 item.logInfo = "评分";
                 item.isAsk = false;
                 pjList.push(item);
+            }
+            if (item.readStatus == 2) {
+                readNumber.value++;
+            } else if (item.readStatus == 1) {
+                readNoNumber.value++;
             }
             allList.push(item);
         });
@@ -225,9 +245,11 @@ const checkList = async (askconfig) => {
                 } catch (error) {
                     addLinfo(`处理失败: ${error.message}`, 'error');
                 }
-                if (index != allList.length - 1 && index + 1 < askconfig.dealNum) {
-                    await new Promise(resolve => setTimeout(resolve, interval)); // 等待间隔
-                }
+                // if (index != allList.length - 1 && index + 1 < askconfig.dealNum) {
+                //     await new Promise(resolve => setTimeout(resolve, interval)); // 等待间隔
+                // }
+                await new Promise(resolve => setTimeout(resolve, interval)); // 等待间隔
+
             }
         }
     } catch (error) {
