@@ -214,10 +214,14 @@ const checkList = async (askconfig) => {
             isRuning.value = false;
             return;
         }
+        if (allList.length < 1) {
+            addLinfo("没有需要处理/回复的清单");
+            isRuning.value = false;
+            return;
+        }
         styledInfoList.value = "";
         const interval = 1000 * 60 * askconfig.refTime; // 分钟的间隔
         addLinfo(`定时器间隔：${askconfig.refTime}分钟`);
-
         for (const [index, item] of allList.entries()) {
             if (askconfig.dealNum > 0 && index >= askconfig.dealNum) {
                 addLinfo("到达指定数量，停止执行");
