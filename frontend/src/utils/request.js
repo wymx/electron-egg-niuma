@@ -193,7 +193,7 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
           console.log("生产===提交信息", nowTimestr());
           // console.log(qdconfig.submitData);
           // 开始提交
-          await submitUrl(submitData, usertoken, qdconfig.submitData.nos);
+          await submitUrl(submitData, usertoken, qdconfig.submitData.nos,qdconfig.submitData.type);
           saveInfo(qdconfig);
           return "生产===提交：" + bodyInfo + nowTimestr();
         }
@@ -261,7 +261,7 @@ async function getUserInfo(id, tokens, parentIds = []) {
   }
 }
 
-async function submitUrl(submitData, tokens, nos) {
+async function submitUrl(submitData, tokens, nos,type) {
   try {
     let datastr = JSON.stringify(submitData);
     let config = {
@@ -273,7 +273,9 @@ async function submitUrl(submitData, tokens, nos) {
     // console.log(config, "config");
     const response = await axios.request(config);
     console.log(response.data, "OnlineDev/response.data");
-    await getDataList(nos, tokens);
+    if (type != "1") {//非中心对中心
+      await getDataList(nos, tokens);
+    }
   } catch (error) {
     console.error("Error fetching data:", error);
     return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
