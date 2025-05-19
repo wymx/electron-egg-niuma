@@ -164,8 +164,12 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
 
           if (userInfo.centerName == toUserInfo.centerName) {
             qdconfig.submitData.type = "5";
+            qdconfig.submitData.status = "3";
+            qdconfig.submitData.beforeJudge = "2";
           } else {
             qdconfig.submitData.type = "1";
+            qdconfig.submitData.status = "11";
+            qdconfig.submitData.beforeJudge = "1";
           }
         }
 

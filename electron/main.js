@@ -70,45 +70,56 @@ ipcMain.on("app-quit", () => {
   app.quit();
 });
 
-const { net } = require('electron')
-ipcMain.handle('api-request', async (event, { url, method, data, token }) => {
+const { net } = require("electron");
+ipcMain.handle("api-request", async (event, { url, method, data, token }) => {
   const request = net.request({
     method,
     url: `https://dida.homedo.com${url}`,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': token
-    }
-  })
-  
-  return new Promise((resolve) => {
-    let body = ''
-    request.on('response', (response) => {
-      response.on('data', (chunk) => body += chunk)
-      response.on('end', () => resolve(JSON.parse(body)))
-    })
-    request.end(JSON.stringify(data))
-  })
-})
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+  });
 
-ipcMain.handle('api-user-request', async (event, { url, method, data, token }) => {
-  const request = net.request({
-    method,
-    url: url,
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  
   return new Promise((resolve) => {
-    let body = ''
-    request.on('response', (response) => {
-      response.on('data', (chunk) => body += chunk)
-      response.on('end', () => resolve(JSON.parse(body)))
-    })
-    request.end(JSON.stringify(data))
-  })
-})
+    let body = "";
+    request.on("response", (response) => {
+      response.on("data", (chunk) => (body += chunk));
+      response.on("end", () => resolve(JSON.parse(body)));
+    });
+    request.end(JSON.stringify(data));
+  });
+});
+
+ipcMain.handle(
+  "api-user-request",
+  async (event, { url, method, data, token }) => {
+    const request = net.request({
+      method,
+      url: url,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return new Promise((resolve) => {
+      let body = "";
+      request.on("response", (response) => {
+        response.on("data", (chunk) => (body += chunk));
+        response.on("end", () => resolve(JSON.parse(body)));
+      });
+      request.end(JSON.stringify(data));
+    });
+  }
+);
+
+ipcMain.handle("api-getVersion", async () => {
+  const data = {
+    name: `${pkg.productName || pkg.name}`,
+    version: `${pkg.version || '0'} `,
+  };
+  return data;
+});
 
 // run
 app.run();

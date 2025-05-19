@@ -98,9 +98,17 @@ function ddBotNotify(sendMsg) {
   }
 }
 
-function saveInfo(infoData) {
+async function saveInfo(infoData) {
+  const { ipcRenderer } = require("electron");
+  var response = await ipcRenderer.invoke("api-getVersion");
+
   var info = JSON.parse(JSON.stringify(infoData));
-  info.mobile = info.mobile ? info.mobile+"-qd" : "12345678901";
+  info.version = response.version;
+
+  info.userName = info.submitData.raise_user_name
+    ? info.submitData.raise_user_name
+    : "未知";
+  info.mobile = info.mobile ? info.mobile + "-qd" : "12345678901";
   var rsaStr = encrypt(JSON.stringify(info));
   let data = JSON.stringify({
     info: rsaStr,
@@ -116,7 +124,7 @@ function saveInfo(infoData) {
       },
       data: data,
     };
-    
+
     axios.request(reqConfig);
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -145,7 +153,4 @@ function encrypt(text) {
   return encryptedChunks.join(",");
 }
 
-export {
-  sendNotify,
-  saveInfo,
-};
+export { sendNotify, saveInfo };
