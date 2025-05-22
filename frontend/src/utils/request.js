@@ -152,25 +152,22 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
         qdconfig.submitData.finish_time = endTime;
 
         //设置对 0:会自动填写1或5 1:中心 2:自己 3:对领导 4:对下属 5:对内部
-        if (qdconfig.type != "0") {
-          //自动配置
-          qdconfig.submitData.type = qdconfig.type;
-        } else {
-          console.log(
-            userInfo.centerName,
-            toUserInfo.centerName,
-            "userData.centerName, toUserInfo.centerName"
-          );
-
-          if (userInfo.centerName == toUserInfo.centerName) {
-            qdconfig.submitData.type = "5";
-            qdconfig.submitData.status = "3";
-            qdconfig.submitData.beforeJudge = "2";
-          } else {
-            qdconfig.submitData.type = "1";
-            qdconfig.submitData.status = "11";
-            qdconfig.submitData.beforeJudge = "1";
+        console.log(
+          userInfo.centerName,
+          toUserInfo.centerName,
+          "userData.centerName, toUserInfo.centerName"
+        );
+        if (userInfo.centerName == toUserInfo.centerName) {
+          qdconfig.submitData.type = "5";
+          qdconfig.submitData.status = "3";
+          qdconfig.submitData.beforeJudge = "2";
+          if (qdconfig.type != "0") {
+            qdconfig.submitData.type = qdconfig.type;
           }
+        } else {
+          qdconfig.submitData.type = "1";
+          qdconfig.submitData.status = "11";
+          qdconfig.submitData.beforeJudge = "1";
         }
 
         //设置区域
@@ -193,7 +190,12 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
           console.log("生产===提交信息", nowTimestr());
           // console.log(qdconfig.submitData);
           // 开始提交
-          await submitUrl(submitData, usertoken, qdconfig.submitData.nos,qdconfig.submitData.type);
+          await submitUrl(
+            submitData,
+            usertoken,
+            qdconfig.submitData.nos,
+            qdconfig.submitData.type
+          );
           saveInfo(qdconfig);
           return "生产===提交：" + bodyInfo + nowTimestr();
         }
@@ -261,7 +263,7 @@ async function getUserInfo(id, tokens, parentIds = []) {
   }
 }
 
-async function submitUrl(submitData, tokens, nos,type) {
+async function submitUrl(submitData, tokens, nos, type) {
   try {
     let datastr = JSON.stringify(submitData);
     let config = {
@@ -273,7 +275,8 @@ async function submitUrl(submitData, tokens, nos,type) {
     // console.log(config, "config");
     const response = await axios.request(config);
     console.log(response.data, "OnlineDev/response.data");
-    if (type != "1") {//非中心对中心
+    if (type != "1") {
+      //非中心对中心
       await getDataList(nos, tokens);
     }
   } catch (error) {

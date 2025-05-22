@@ -5,6 +5,7 @@ const { Menu, MenuItem, session, ipcMain } = require("electron");
 // const pkg = require('../package.json');
 const path = require("path");
 const pkg = require(path.join(__dirname, "../../package.json"));
+const fs = require("fs");
 
 // new app
 const app = new ElectronEgg();
@@ -17,6 +18,38 @@ app.register("window-ready", life.windowReady);
 app.register("before-close", () => {
   life.beforeClose;
 });
+var appCache = async () => {
+  const { app } = require("electron");
+  let cache = app.getPath("cache");
+  // 获取缓存的路径
+  const cachePath = path.join(cache, pkg.name);
+  // 清理缓存目录下的文件
+  if (fs.existsSync(cachePath)) {
+    console.log("清理缓存目录下的文件", cachePath);
+    var deletePath = ["blob_storage", "Code Cache","Cache"];
+    for (var i = 0; i < deletePath.length; i++) {
+      deleteDirectoryRecursive(path.join(cachePath, deletePath[i]));
+    }
+  }
+}
+appCache()
+// 使用promises API避免阻塞主进程（替换原同步方法）
+async function deleteDirectoryRecursive(directoryPath) {
+  if (await fs.promises.access(directoryPath).catch(() => false)) {
+    const files = await fs.promises.readdir(directoryPath);
+    await Promise.all(
+      files.map(async (file) => {
+        const curPath = path.join(directoryPath, file);
+        if ((await fs.promises.lstat(curPath)).isDirectory()) {
+          await deleteDirectoryRecursive(curPath);
+        } else {
+          await fs.promises.unlink(curPath);
+        }
+      })
+    );
+    await fs.promises.rmdir(directoryPath);
+  }
+}
 
 // register preload
 app.register("preload", preload);
@@ -116,7 +149,7 @@ ipcMain.handle(
 ipcMain.handle("api-getVersion", async () => {
   const data = {
     name: `${pkg.productName || pkg.name}`,
-    version: `${pkg.version || '0'} `,
+    version: `${pkg.version || "0"} `,
   };
   return data;
 });
