@@ -128,26 +128,30 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
         // 结束时间戳
         const date = new Date();
         if (qdconfig.finishTimeType == 0) {
-          // 设置为下个月的第0天（即本月最后一天）
-          date.setMonth(date.getMonth() + 1, 0);
+          // 获取当前日期
+          const currentYear = date.getFullYear();
+          const currentMonth = date.getMonth();
+          // 计算下个月的第一天
+          const nextMonthFirstDay = new Date(currentYear, currentMonth + 1, 1);
+          // 设置为下个月第一天的前一天（即本月最后一天）
+          date.setTime(nextMonthFirstDay.getTime() - 1);
         } else {
           date.setDate(date.getDate() + qdconfig.finishTimeType);
         }
         date.setHours(23, date.getMinutes(), date.getSeconds(), 0); // 设置时间为23
         // 增加随机分钟逻辑
         if (qdconfig.finishTimeAutom > 0) {
+          const currentMinutes = date.getMinutes();
+          const maxAllowed = 59 - currentMinutes;
           const randomMinutes = Math.floor(
-            Math.random() * (qdconfig.finishTimeAutom - 0)
+            Math.random() * Math.min(qdconfig.finishTimeAutom, maxAllowed + 1)
           );
-          date.setMinutes(date.getMinutes() + randomMinutes);
+          date.setMinutes(currentMinutes + randomMinutes);
         }
-        console.log(date, "endTime");
         const getMonthEndTimestamp = date.getTime();
+        var endTime = getMonthEndTimestamp;
 
-        var endTime =
-          qdconfig.submitData.finish_time == 0
-            ? getMonthEndTimestamp
-            : qdconfig.submitData.finish_time;
+        // console.log(endTime, "endTime", date);
 
         qdconfig.submitData.finish_time = endTime;
 
