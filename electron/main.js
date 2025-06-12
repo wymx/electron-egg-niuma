@@ -5,7 +5,6 @@ const { BrowserWindow, Menu, MenuItem, session, ipcMain } = require("electron");
 // const pkg = require('../package.json');
 const path = require("path");
 const pkg = require(path.join(__dirname, "../../package.json"));
-const log = require(path.join(__dirname, "../../changeLog.json"));
 const fs = require("fs");
 
 // new app
@@ -80,20 +79,23 @@ const template = [
     submenu: [
       {
         label: "更新信息",
-        click: () => {
+        click: async () => {
           // 创建浏览器窗口
           const win = new BrowserWindow({
+            title: `更新日志`,
             width: 500,
             height: 400,
             webPreferences: {
-              nodeIntegration: true,
+              webSecurity: false, // 允许本地资源加载
+              allowRunningInsecureContent: true, // 允许混合内容
+              nodeIntegration: false,
+              contextIsolation: true,
             },
             modal: true,
             autoHideMenuBar: true,
           });
-
           // 加载自定义 HTML
-          win.loadURL(formatChangelog());
+          win.loadURL(await formatChangelog());
         },
       },
       {
@@ -177,14 +179,34 @@ ipcMain.handle("api-getVersion", async () => {
 app.run();
 
 // 修改 formatChangelog 函数
-function formatChangelog() {
+async function formatChangelog() {
+  // 首次加载或更新资源
+  var cssPath = path.join(__dirname, "../../resources/element-ui/index.css");
+  var jsPath = path.join(__dirname, "../../resources/element-ui/index.js");
+  var vuePath = path.join(__dirname, "../../resources/vue/vue.js");
+
+  const cssContent = await fs.promises.readFile(cssPath, "utf-8");
+  const vueContent = await fs.promises.readFile(vuePath, "utf-8");
+  const jsContent = await fs.promises.readFile(jsPath, "utf-8");
+
+  if (
+    !fs.existsSync(cssPath) ||
+    !fs.existsSync(jsPath) ||
+    !fs.existsSync(vuePath)
+  ) {
+    console.log("资源文件不存在，请检查路径");
+  }
+
   return `data:text/html;charset=UTF-8,${encodeURIComponent(`
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
-      <!-- 引入 Element 样式 -->
-      <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+      <style>
+        [v-cloak] { display: none } 
+        body { opacity: 0; transition: opacity 0.3s }
+      </style>
+      <style>${cssContent}</style>
       <style>
         .el-timeline {
           margin: 20px;
@@ -203,19 +225,21 @@ function formatChangelog() {
           ${generateTimelineItems()}
         </el-timeline>
       </div>
-
-      <!-- 引入 Vue -->
-      <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-      <!-- 引入 Element 组件库 -->
-      <script src="https://unpkg.com/element-ui/lib/index.js"></script>
       
+
       <script>
-        new Vue({
-          el: '#app',
-          created() {
-            // 初始化 Element 组件
-            ELEMENT.locale(ELEMENT.lang.zhCN)
-          }
+        ${vueContent}
+        ${jsContent}
+        document.addEventListener('DOMContentLoaded', () => {
+          new Vue({
+            el: '#app',
+            created() {
+              ELEMENT.locale(ELEMENT.lang.zhCN)
+            },
+            mounted() {
+              document.body.style.opacity = 1
+            }
+          })
         })
       </script>
     </body>
@@ -225,9 +249,10 @@ function formatChangelog() {
   // 生成时间线项的函数
   function generateTimelineItems() {
     try {
-      const changelogData = require('../../changeLog.json');
+      const changelogData = require("../../changeLog.json");
       return changelogData
-        .map(item => `
+        .map(
+          (item) => `
           <el-timeline-item timestamp="${item.date}" placement="top">
             <el-card>
               <h4>${item.title}</h4>
@@ -237,7 +262,9 @@ function formatChangelog() {
               </div>
             </el-card>
           </el-timeline-item>
-        `).join('');
+        `
+        )
+        .join("");
     } catch (e) {
       return `
         <el-timeline-item timestamp="暂无数据" placement="top">
