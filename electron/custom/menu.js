@@ -151,7 +151,7 @@ module.exports = {
           <el-timeline-item timestamp="${item.date}" placement="top">
             <el-card>
               <h4>${item.title}</h4>
-              <p>${item.description}</p>
+              ${formatDescription(item.description)}
               <div style="color: #909399;font-size:12px;">
                 ${item.author} 提交于 ${item.time}
               </div>
@@ -170,6 +170,31 @@ module.exports = {
         </el-timeline-item>
       `;
       }
+    }
+
+    // 新增函数：格式化描述文本为多行/多标签
+    function formatDescription(desc) {
+      if (!desc) return "<p></p>";
+      // 按换行符分割描述文本
+      const lines = desc.split("\n").filter((line) => line.trim());
+      // 为每行内容生成标签
+      return lines
+        .map((line) => {
+          // 检查是否是标签格式（如 "[标签] 内容"）
+          const tagMatch = line.match(/^\[(.*?)\]\s*(.*)/);
+          if (tagMatch) {
+            const [_, tag, content] = tagMatch;
+            return `
+        <div style="margin: 5px 0;">
+          <el-tag size="small" type="info">${tag}</el-tag>
+          <span style="margin-left: 5px;">${content}</span>
+        </div>
+      `;
+          }
+          // 普通文本行
+          return `<p style="margin: 5px 0;">${line}</p>`;
+        })
+        .join("");
     }
   },
 };

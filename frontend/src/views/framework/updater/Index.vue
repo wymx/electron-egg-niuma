@@ -1,29 +1,31 @@
 <template>
-  <div id="app-updater">
-    <div class="one-block-1">
-      <div style="display: flex;flex-direction: column;">
-         <a-button type="primary" size="small" @click="gotoAsk">跳转回复</a-button>
+  <div>
+    <iframe src="https://it-tools.tech/" frameborder="0" style="width: 100%; height: 100vh;"
+      allowfullscreen></iframe>
+
+    <div v-if="false" id="app-updater">
+      <div class="one-block-1">
+        <span>
+          1. 下载更新
+        </span>
       </div>
-      <span>
-        1. 自动更新
-      </span>
-    </div>  
-    <div class="one-block-2">
-      <a-space>
-        <a-button @click="checkForUpdater()">检查更新</a-button>
-        <a-button @click="download()">下载并安装</a-button>
-      </a-space>
-    </div>
-    <div class="one-block-1">
-      <span>
-        2. 下载进度
-      </span>
-    </div>  
-    <div class="one-block-2">
-      <a-progress :percent="percentNumber" status="active" />
-      <a-space>
-        {{ progress }}
-      </a-space>
+      <div class="one-block-2">
+        <a-space>
+          <!-- <a-button @click="checkForUpdater()">检查更新</a-button> -->
+          <a-button @click="download()">下载并安装</a-button>
+        </a-space>
+      </div>
+      <div class="one-block-1">
+        <span>
+          2. 下载进度
+        </span>
+      </div>
+      <div class="one-block-2">
+        <a-progress :percent="percentNumber" status="active" />
+        <a-space>
+          {{ progress }}
+        </a-space>
+      </div>
     </div>
   </div>
 </template>
@@ -32,17 +34,6 @@ import { ipc } from '@/utils/ipcRenderer';
 import { ipcApiRoute, specialIpcRoute } from '@/api';
 import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
-
-import { useRouter } from 'vue-router'
-const router = useRouter();
-
-const gotoAsk = () => {
-    const menuInfo = {
-        name: "HomeAutoAsk",
-        query: {}
-    }
-    router.push(menuInfo);
-}
 
 
 const status = ref(0);
@@ -67,13 +58,13 @@ function init() {
   })
 }
 
-function checkForUpdater () {
+function checkForUpdater() {
   ipc.invoke(ipcApiRoute.framework.checkForUpdater).then(r => {
     console.log(r);
   })
 }
 
-function download () {
+function download() {
   if (status.value !== 1) {
     message.info('没有可用版本');
     return
@@ -88,13 +79,14 @@ function download () {
   padding: 0px 10px;
   text-align: left;
   width: 100%;
+
   .one-block-1 {
     font-size: 16px;
     padding-top: 10px;
   }
+
   .one-block-2 {
     padding-top: 10px;
   }
 }
 </style>
-  

@@ -1,5 +1,12 @@
 [
     {
+        "date": "2025-06-13",
+        "title": "版本 0.0.16",
+        "description": "1. 嵌入工具网站https://it-tools.tech/ \n2. 更改页面样式",
+        "author": "wym",
+        "time": "2025-06-13"
+    },
+    {
         "date": "2025-06-11",
         "title": "版本 0.0.16",
         "description": "1. 增加更新历史记录\n2. 完成时间随机增加处理",

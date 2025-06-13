@@ -29,10 +29,7 @@
             </div>
 
             <div style="display: flex;flex-direction: column;">
-                <a-button v-if="showAsk" type="primary" size="small" @click="gotoAsk">跳转回复</a-button>
-                <!-- <a-button type="primary" size="small" danger @click="closeApp">退出程序</a-button> -->
-                <!-- <button v-if="showAsk" style="margin-left: 8px;max-height: 50px;" @click="gotoAsk">跳转回复</button> -->
-                <!-- <button style="margin-left: 8px;max-height: 50px;" @click="closeApp">退出程序</button> -->
+                <!-- <a-button v-if="showAsk" type="primary" size="small" @click="gotoAsk">跳转回复</a-button> -->
             </div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
@@ -73,13 +70,12 @@
             </div>
         </div>
     </div>
-
 </template>
 <script setup>
 import { UserOutlined } from '@ant-design/icons-vue';
 import { Modal } from 'ant-design-vue';
 
-import { ref, reactive, watch,onMounted } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 import jsyaml from 'js-yaml';
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList, versionCheck } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
@@ -471,7 +467,7 @@ const getUserListShowAsk = async () => {
         var userInfo = await askUserList();
         if (userInfo.showAll) {
             showAsk.value = true;
-        }else {
+        } else {
             showAsk = userInfo.userList.some(item => item.mobile === result.mobile);
         }
     } catch (e) {
@@ -510,9 +506,9 @@ function openLink(url) {
 }
 
 // onMounted(async () => {
-     getNumberInfo();
-     getUserListShowAsk();
-     checkAppVersion()
+getNumberInfo();
+getUserListShowAsk();
+checkAppVersion()
 // });
 
 

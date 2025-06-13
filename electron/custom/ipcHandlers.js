@@ -1,6 +1,6 @@
-const { ipcMain } = require('electron');
-const { net } = require('electron');
-const path = require('path');
+const { ipcMain } = require("electron");
+const { net } = require("electron");
+const path = require("path");
 const pkg = require(path.join(__dirname, "../../../package.json"));
 
 // 应用命令处理
@@ -58,7 +58,7 @@ function handleNetRequest(request, data) {
       response.on("end", () => {
         try {
           resolve(JSON.parse(body));
-        } catch(e) {
+        } catch (e) {
           resolve({ code: 500, message: "响应解析失败" });
         }
       });
@@ -70,5 +70,5 @@ function handleNetRequest(request, data) {
 module.exports = {
   registerAppHandlers,
   registerApiHandlers,
-  registerVersionHandler
+  registerVersionHandler,
 };
