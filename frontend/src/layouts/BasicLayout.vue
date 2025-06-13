@@ -36,19 +36,20 @@
                         </a-menu-item>
                         <a-sub-menu key="sub2">
                             <template #icon>
-                                <setting-outlined />
+                                <picture-outlined />
                             </template>
                             <template #title>图片操作</template>
-                            <a-menu-item key="/tinyImage">压缩图片</a-menu-item>
-                            <a-menu-item key="/upImage">上传图片</a-menu-item>
+                            <a-menu-item key="/tinyImage">
+                                <file-zip-outlined /> 压缩图片</a-menu-item>
+                            <a-menu-item key="/upImage"><up-square-outlined /> 上传图片</a-menu-item>
                         </a-sub-menu>
                         <a-sub-menu key="sub1">
                             <template #icon>
                                 <setting-outlined />
                             </template>
                             <template #title>其他操作</template>
-                            <a-menu-item key="/updater">常用工具</a-menu-item>
-                            <a-menu-item @click="closeApp">退出程序</a-menu-item>
+                            <a-menu-item key="/updater"><tool-outlined /> 常用工具</a-menu-item>
+                            <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
                         </a-sub-menu>
                     </a-menu>
                 </a-layout-sider>

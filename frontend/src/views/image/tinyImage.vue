@@ -8,10 +8,11 @@
                     <a-button type="primary" style="width: 300px">
                         <upload-outlined /> 批量选择图片 (最多 {{ maxFiles }} 张)
                     </a-button>
-                </a-upload>
-                <div v-if="fileList.length > 0" class="file-count">
+                    <div v-if="fileList.length > 0" class="file-count">
                     已选择 {{ fileList.length }} 张图片，总大小 {{ totalSize }}MB
                 </div>
+                </a-upload>
+                
                 <div style="display: flex;align-items: center;margin-top: 20px;justify-content: center;">
                             <div style="margin-right: 10px">输出格式</div>
                             <a-select v-model:value="outputFormat" style="width: 150px">
@@ -330,6 +331,7 @@ const downloadImage = async (fileItem) => {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: space-around;
 }
 
 .compress-settings {
