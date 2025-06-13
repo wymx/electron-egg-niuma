@@ -67,8 +67,102 @@ function handleNetRequest(request, data) {
   });
 }
 
+const sharp = require("sharp");
+// 压缩图片处理
+function compressImage() {
+  ipcMain.handle("compress-image", async (event, { imageData, options }) => {
+    try {
+      // 从 dataURL 提取 buffer
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
+      const inputBuffer = Buffer.from(base64Data, "base64");
+
+      // 计算新尺寸
+      const metadata = await sharp(inputBuffer).metadata();
+      const newWidth = Math.round(
+        (metadata.width * options.resizePercentage) / 100
+      );
+      const newHeight = Math.round(
+        (metadata.height * options.resizePercentage) / 100
+      );
+
+      // 压缩配置
+      const sharpOptions = {
+        quality: options.quality,
+        compressionLevel: options.pngQuality,
+      };
+
+      // 根据格式处理
+      let outputBuffer;
+      switch (options.format) {
+        case "jpeg":
+          outputBuffer = await sharp(inputBuffer)
+            .resize(newWidth, newHeight)
+            .jpeg(sharpOptions)
+            .toBuffer();
+          break;
+        case "png":
+          outputBuffer = await sharp(inputBuffer)
+            .resize(newWidth, newHeight)
+            .png(sharpOptions)
+            .toBuffer();
+          break;
+        case "webp":
+          outputBuffer = await sharp(inputBuffer)
+            .resize(newWidth, newHeight)
+            .webp(sharpOptions)
+            .toBuffer();
+          break;
+        default:
+          throw new Error("不支持的输出格式");
+      }
+
+      return {
+        compressedData: `data:image/${
+          options.format
+        };base64,${outputBuffer.toString("base64")}`,
+        size: outputBuffer.length,
+        width: newWidth,
+        height: newHeight,
+      };
+    } catch (error) {
+      throw new Error("图片压缩失败: " + error.message);
+    }
+  });
+}
+
+// 保存图片处理 (与之前相同)
+function saveImage() {
+  ipcMain.handle("save-image", async (event, { dataUrl, defaultPath }) => {
+    const { dialog ,app} = require("electron");
+    const fs = require("fs");
+    const path = require("path");
+
+    try {
+      const { filePath } = await dialog.showSaveDialog({
+        title: "保存压缩图片",
+        defaultPath: path.join(app.getPath("downloads"), defaultPath),
+        filters: [
+          { name: "Images", extensions: ["jpg", "jpeg", "png", "webp"] },
+          { name: "All Files", extensions: ["*"] },
+        ],
+      });
+
+      if (!filePath) return { success: false };
+
+      const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, "");
+      await fs.promises.writeFile(filePath, Buffer.from(base64Data, "base64"));
+
+      return { success: true, filePath };
+    } catch (error) {
+      console.error("保存图片失败:", error);
+      return { success: false };
+    }
+  });
+}
 module.exports = {
   registerAppHandlers,
   registerApiHandlers,
   registerVersionHandler,
+  compressImage,
+  saveImage,
 };

@@ -2,10 +2,16 @@ const { ElectronEgg } = require("ee-core");
 const { Lifecycle } = require("./preload/lifecycle");
 const { preload } = require("./preload");
 
-const { createMenu } = require('./custom/menu'); // 导入菜单模块
-const { registerAppHandlers, registerApiHandlers, registerVersionHandler } = require('./custom/ipcHandlers');
+const { createMenu } = require("./custom/menu"); // 导入菜单模块
+const {
+  registerAppHandlers,
+  registerApiHandlers,
+  registerVersionHandler,
+  compressImage,
+  saveImage,
+} = require("./custom/ipcHandlers");
 
-const { cleanAppCache } = require('./custom/cacheCleaner');
+const { cleanAppCache } = require("./custom/cacheCleaner");
 cleanAppCache();
 
 // new app
@@ -29,6 +35,8 @@ function initializeIpc() {
   registerAppHandlers();
   registerApiHandlers();
   registerVersionHandler();
+  compressImage();
+  saveImage();
 }
 initializeIpc();
 // run
