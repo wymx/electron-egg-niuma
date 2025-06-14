@@ -39,7 +39,7 @@
                             </template>
                             清单
                         </a-menu-item>
-                        <a-menu-item v-if="showAsk" key="/autoAsk">
+                        <a-menu-item v-if="showAsk && level >= 1" key="/autoAsk">
                             <template #icon>
                                 <message-outlined />
                             </template>
