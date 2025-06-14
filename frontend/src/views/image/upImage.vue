@@ -56,7 +56,7 @@ import { message } from 'ant-design-vue';
 import axios from 'axios';
 
 // 表单数据
-const projectPath = ref('homedo-wx-uni/');
+const projectPath = ref('homedo-oss/');
 const imagePath = ref(`static/${new Date().getTime()}/`);
 const keepOriginalName = ref(true);
 
@@ -282,8 +282,8 @@ const copyUrl = (url) => {
 }
 
 .file-preview {
-  width: 144px;
-  height: 170px;
+  width: 100px;
+  height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -292,7 +292,7 @@ const copyUrl = (url) => {
 
 .file-thumbnail {
   width: 100%;
-  height: 145px;
+  height: 100px;
   object-fit: contain;
 }
 
