@@ -10,7 +10,6 @@
                         </template>
                     </a-progress>
                 </div>
-                <!-- <div>总提报：{{ numberResult.t2 }}</div> -->
                 <div>未处理：{{ numberResult.t4 }}</div>
             </div>
             <div style="display: flex;align-items: center;width: 80%;text-align: left;">

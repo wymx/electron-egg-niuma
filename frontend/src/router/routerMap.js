@@ -47,6 +47,12 @@ const constantRouterMap = [
         component: () => import("@/views/framework/updater/Index.vue"),
         meta: { title: "更新信息" },
       },
+      {
+        path: "/gameWeb",
+        name: "FrameworkGameWeb",
+        component: () => import("@/views/framework/gameWeb.vue"),
+        meta: { title: "更新信息" },
+      },
     ],
   },
   {

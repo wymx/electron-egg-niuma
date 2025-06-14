@@ -33,7 +33,7 @@
                             </template>
                             首页
                         </a-menu-item>
-                        <a-menu-item key="/qdAuto">
+                        <a-menu-item key="/qdAuto" v-if="level > 0">
                             <template #icon>
                                 <unordered-list-outlined />
                             </template>
@@ -45,21 +45,22 @@
                             </template>
                             自动回复
                         </a-menu-item>
-                        <a-sub-menu key="sub2">
+                        <a-sub-menu key="sub2" v-if="level > 0">
                             <template #icon>
                                 <picture-outlined />
                             </template>
                             <template #title>图片操作</template>
-                            <a-menu-item key="/tinyImage">
+                            <a-menu-item key="/tinyImage" v-if="level > 11">
                                 <file-zip-outlined /> 压缩图片</a-menu-item>
-                            <a-menu-item key="/upImage"><up-square-outlined /> 上传图片</a-menu-item>
+                            <a-menu-item key="/upImage" v-if="level > 12"><up-square-outlined /> 上传图片</a-menu-item>
                         </a-sub-menu>
                         <a-sub-menu key="sub1">
                             <template #icon>
                                 <setting-outlined />
                             </template>
                             <template #title>其他操作</template>
-                            <a-menu-item key="/updater"><tool-outlined /> 常用工具</a-menu-item>
+                            <a-menu-item key="/updater" v-if="level > 9"><tool-outlined /> 常用工具</a-menu-item>
+                            <a-menu-item key="/gameWeb" v-if="level > 99"><fire-outlined /> h5game</a-menu-item>
                             <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
                         </a-sub-menu>
                     </a-menu>
@@ -84,7 +85,7 @@ import {
     SettingOutlined
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList, versionCheck } from '../utils/request.js'
+import { askUserList, versionCheck } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'
 var result = reactive(jsyaml.load(submitQingdan));
 const router = useRouter();
@@ -93,6 +94,8 @@ const selectedKeys = ref([route.path]); // 初始化为当前路径
 
 const collapsed = ref(false);
 let showAsk = ref(false);
+let level = ref(0);
+
 
 // 监听路由变化更新菜单选中状态
 watch(() => route.path, (newPath) => {
@@ -164,8 +167,17 @@ const getUserListShowAsk = async () => {
         var userInfo = await askUserList();
         if (userInfo.showAll) {
             showAsk.value = true;
-        } else {
-            showAsk.value = userInfo.userList.some(item => item.mobile === result.mobile);
+        }
+        if (userInfo.levelAll) {
+            level.value = userInfo.levelAll;
+        }
+        if (userInfo.userList && userInfo.userList.length > 0) {
+            userInfo.userList.forEach(item => {
+                if (item.mobile === result.mobile) {
+                    showAsk.value = true;
+                    level.value = item.level ? item.level : level.value;
+                }
+            });
         }
     } catch (e) {
         console.error("获取用户列表失败:", e);
