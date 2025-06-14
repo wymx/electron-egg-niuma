@@ -386,7 +386,7 @@ const getNumberInfo = async () => {
             return;
         }
         const numberData = await numberInfo(tocken);
-        Object.assign(numberResult, numberData);;
+        Object.assign(numberResult, numberData);
         percent.value = (numberResult.t2 / result.submitNumber) * 100;
     } catch (e) {
         console.error("获取数量信息失败:", e);

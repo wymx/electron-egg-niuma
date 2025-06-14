@@ -33,7 +33,7 @@
                             </template>
                             首页
                         </a-menu-item>
-                        <a-menu-item key="/qdAuto" v-if="level > 0">
+                        <a-menu-item key="/qdAuto" v-if="level >= 0">
                             <template #icon>
                                 <unordered-list-outlined />
                             </template>
@@ -45,22 +45,22 @@
                             </template>
                             自动回复
                         </a-menu-item>
-                        <a-sub-menu key="sub2" v-if="level > 0">
+                        <a-sub-menu key="sub2" v-if="level >= 10">
                             <template #icon>
                                 <picture-outlined />
                             </template>
                             <template #title>图片操作</template>
-                            <a-menu-item key="/tinyImage" v-if="level > 11">
+                            <a-menu-item key="/tinyImage" v-if="level >= 10">
                                 <file-zip-outlined /> 压缩图片</a-menu-item>
-                            <a-menu-item key="/upImage" v-if="level > 12"><up-square-outlined /> 上传图片</a-menu-item>
+                            <a-menu-item key="/upImage" v-if="level >= 12"><up-square-outlined /> 上传图片</a-menu-item>
                         </a-sub-menu>
                         <a-sub-menu key="sub1">
                             <template #icon>
                                 <setting-outlined />
                             </template>
                             <template #title>其他操作</template>
-                            <a-menu-item key="/updater" v-if="level > 9"><tool-outlined /> 常用工具</a-menu-item>
-                            <a-menu-item key="/gameWeb" v-if="level > 99"><fire-outlined /> h5game</a-menu-item>
+                            <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
+                            <a-menu-item key="/gameWeb" v-if="level >= 99"><fire-outlined /> h5game</a-menu-item>
                             <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
                         </a-sub-menu>
                     </a-menu>
@@ -85,7 +85,7 @@ import {
     SettingOutlined
 } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
-import { askUserList, versionCheck } from '../utils/request.js'
+import { askUserList, versionCheck,loginUser,currentUserInfo } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'
 var result = reactive(jsyaml.load(submitQingdan));
 const router = useRouter();
@@ -94,6 +94,7 @@ const selectedKeys = ref([route.path]); // 初始化为当前路径
 
 const collapsed = ref(false);
 let showAsk = ref(false);
+let openUrl = ref(false);
 let level = ref(0);
 
 
@@ -121,6 +122,8 @@ const validateAndSave = () => {
         // 可以在这里添加其他需要触发的逻辑
         // 例如自动检查用户权限
         getUserListShowAsk();
+        getUserListShowAsk();
+        getNumberInfo();
     }
 };
 
@@ -141,6 +144,11 @@ const validateCredentials = () => {
         message.warning("没有密码");
         return false;
     }
+    if (!openUrl.value) {
+        message.warning("检查手机号和密码是否正确");
+        return false;
+    }
+
     return true;
 };
 const handleMenuClick = ({ key }) => {
@@ -165,6 +173,7 @@ const handleMenuClick = ({ key }) => {
 const getUserListShowAsk = async () => {
     try {
         var userInfo = await askUserList();
+        showAsk.value = false;
         if (userInfo.showAll) {
             showAsk.value = true;
         }
@@ -211,9 +220,34 @@ const checkAppVersion = async () => {
     }
 };
 
+const getNumberInfo = async () => {
+    try {
+        const response = await loginUser({
+            mobile: result.mobile,
+            password: result.password
+        });
+        localStorage.setItem("usertoken", response)
+        if (response) {
+            const response = await currentUserInfo();
+            if (response) {
+                openUrl.value = true;
+            } else {
+                openUrl.value = false;
+            }
+        } else {
+            openUrl.value = false;
+        }
+    } catch (e) {
+        console.error("获取数量信息失败:", e);
+        openUrl.value = false;
+        localStorage.setItem("usertoken", "")
+    }
+};
+
 // onMounted(async () => {
 getUserListShowAsk();
-checkAppVersion()
+checkAppVersion();
+getNumberInfo();
 // });
 
 </script>
