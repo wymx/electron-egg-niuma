@@ -22,11 +22,17 @@
                         </div>
                     </div>
                     <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="handleMenuClick">
-                        <a-menu-item key="/home">
+                         <a-menu-item key="/home">
                             <template #icon>
                                 <home-outlined />
                             </template>
                             首页
+                        </a-menu-item>
+                        <a-menu-item key="/qdAuto">
+                            <template #icon>
+                                <unordered-list-outlined />
+                            </template>
+                            清单
                         </a-menu-item>
                         <a-menu-item v-if="showAsk" key="/autoAsk">
                             <template #icon>

@@ -10,7 +10,13 @@ const constantRouterMap = [
     children: [
       {
         path: "/home",
-        name: "Home",
+        name: "HomeIndex",
+        component: () => import("@/views/home/index.vue"),
+        meta: { title: "首页" },
+      },
+      {
+        path: "/qdAuto",
+        name: "HomeHome",
         component: () => import("@/views/home/home.vue"),
         meta: { title: "首页" },
       },

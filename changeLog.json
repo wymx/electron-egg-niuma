@@ -1,10 +1,10 @@
 [
     {
-        "date": "2025-06-13",
-        "title": "版本 0.0.16",
-        "description": "1. 嵌入工具网站https://it-tools.tech/ \n2. 更改页面样式",
+        "date": "2025-06-14",
+        "title": "版本 1.0.0",
+        "description": "1.更改页面样式 \n2. 嵌入工具网站https://it-tools.tech/\n3. 增加压缩图片功能\n4. 增加图片上传功能"    ,
         "author": "wym",
-        "time": "2025-06-13"
+        "time": "2025-06-14"
     },
     {
         "date": "2025-06-11",

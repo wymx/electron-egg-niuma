@@ -48,7 +48,7 @@ import { useRouter, useRoute } from 'vue-router';
 const route = useRoute();
 const router = useRouter();
 const gotoHome = () => {
-    router.push({ name: 'Home' });
+    router.push({ name: 'HomeIndex' });
 }
 const mobile = ref(route.query.mobile);
 const password = ref(route.query.password);
