@@ -2,11 +2,16 @@
     <div class="layout-container">
         <!-- 顶部导航栏 -->
         <div class="header">
-            <!-- <div class="logo">管理后台</div>
-            <div class="user-info">
-                <span>xxxx</span>
-                <a-button @click="logout">退出程序</a-button>
-            </div> -->
+            <a-input v-model:value="result.mobile" placeholder="phone" @change="handleMobileChange">
+                <template #prefix>
+                    <user-outlined />
+                </template>
+            </a-input>
+            <a-input-password v-model:value="result.password" placeholder="password" @change="handlePasswordChange">
+                <template #prefix>
+                    <lock-outlined />
+                </template>
+            </a-input-password>
         </div>
 
         <div class="main-container">
@@ -22,7 +27,7 @@
                         </div>
                     </div>
                     <a-menu v-model:selectedKeys="selectedKeys" mode="inline" @click="handleMenuClick">
-                         <a-menu-item key="/home">
+                        <a-menu-item key="/home">
                             <template #icon>
                                 <home-outlined />
                             </template>
@@ -78,6 +83,7 @@ import {
     MessageOutlined,
     SettingOutlined
 } from '@ant-design/icons-vue';
+import { message } from 'ant-design-vue';
 import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList, versionCheck } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'
 var result = reactive(jsyaml.load(submitQingdan));
@@ -93,9 +99,6 @@ watch(() => route.path, (newPath) => {
     selectedKeys.value = [newPath];
 });
 
-const handleMenuClick = ({ key }) => {
-    router.push(key);
-};
 
 const closeApp = () => {
     const { ipcRenderer } = require('electron');
@@ -105,7 +108,57 @@ const closeApp = () => {
 const allResult = ref(localStorage.getItem("allResult") || "{}");
 const allData = JSON.parse(allResult.value);
 const mobile = ref(allData.mobile || "");
+const password = ref(allData.password || "");
 result.mobile = mobile.value;
+result.password = password.value;
+const validateAndSave = () => {
+    if (result.mobile && result.mobile.length > 0 &&
+        result.password && result.password.length > 0) {
+        localStorage.setItem("allResult", JSON.stringify(result));
+        // 可以在这里添加其他需要触发的逻辑
+        // 例如自动检查用户权限
+        getUserListShowAsk();
+    }
+};
+
+const handleMobileChange = () => {
+    validateAndSave();
+};
+
+const handlePasswordChange = () => {
+    validateAndSave();
+};
+
+const validateCredentials = () => {
+    if (!result.mobile || result.mobile.length < 1) {
+        message.warning('没有手机号');
+        return false;
+    }
+    if (!result.password || result.password.length < 1) {
+        message.warning("没有密码");
+        return false;
+    }
+    return true;
+};
+const handleMenuClick = ({ key }) => {
+
+    if (key == '/qdAuto') {
+        if (!validateCredentials()) return;
+        router.push(key);
+    } else if (key == '/autoAsk') {
+
+        if (!validateCredentials()) return;
+        const menuInfo = {
+            name: "HomeAutoAsk",
+            query: { mobile: result.mobile, password: result.password }
+        }
+        router.push(menuInfo);
+    } else {
+        router.push(key);
+    }
+    getUserListShowAsk();
+};
+
 const getUserListShowAsk = async () => {
     try {
         var userInfo = await askUserList();
@@ -172,18 +225,17 @@ checkAppVersion()
 
 .header {
     /* height: 48px; */
-    background: #001529;
+    /* background: #001529; */
     color: white;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    /* padding: 0 24px; */
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 12px;
 }
 
 .main-container {

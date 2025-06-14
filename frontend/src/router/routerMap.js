@@ -18,7 +18,7 @@ const constantRouterMap = [
         path: "/qdAuto",
         name: "HomeHome",
         component: () => import("@/views/home/home.vue"),
-        meta: { title: "首页" },
+        meta: { title: "清单" },
       },
       {
         path: "/autoAsk",

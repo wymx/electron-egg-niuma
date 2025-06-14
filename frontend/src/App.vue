@@ -9,6 +9,10 @@
 </template>
 <script setup>
 import { onMounted, ref } from 'vue';
+
+import { Modal } from 'ant-design-vue';
+import { versionCheck } from './utils/request.js'
+
 const isDev = ref(process.env.NODE_ENV === 'development');
 onMounted(() => {
   const loadingElement = document.getElementById('loadingPage');
@@ -16,5 +20,33 @@ onMounted(() => {
     loadingElement.remove();
   }
 });
+const checkAppVersion = async () => {
+    try {
+        var chckInfo = await versionCheck();
+        if (chckInfo.showPop) {
+            Modal.success({
+                title: chckInfo.title,
+                content: chckInfo.newInfo,
+                okText: chckInfo.okText,
+                okType: chckInfo.okType,
+                okButtonProps: chckInfo.okButtonProps,
+                closable: !chckInfo.mustDown,
+                keyboard: false,
+                maskClosable: false,
+                onOk() {
+                    if (chckInfo.downloadUrl) {
+                      const { shell } = require('electron') // 引入 Electron 的 shell 模块
+                      shell.openExternal(chckInfo.downloadUrl) // 使用 openExternal 方法打开链接
+                    }
+                },
+            });
+        }
+    } catch (e) {
+        console.error("获取用跟新失败:", e);
+    }
+};
+
+checkAppVersion()
+
 </script>
 <style lang="less"></style>

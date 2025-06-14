@@ -40,21 +40,14 @@
                 style="height: 100%;width: 50%;resize: none; text-align: left;" />
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
-                    <div style="display: flex;flex-direction: row;justify-content: space-around;">
-                        <!-- <input type="text" placeholder="请输入手机号" v-model="result.mobile" /> -->
-                        <!-- <input type="password" placeholder="请输入密码" v-model="result.password" /> -->
-                        <a-input v-model:value="result.mobile" placeholder="Basic usage">
+                    <!-- <div style="display: flex;flex-direction: row;justify-content: space-around;">
+                        <a-input v-model:value="result.mobile" placeholder="phone">
                             <template #prefix>
                                 <user-outlined />
                             </template>
-                            <!-- <template #suffix>
-                                <a-tooltip title="手机号">
-                                    <info-circle-outlined style="color: rgba(0, 0, 0, 0.45)" />
-                                </a-tooltip>
-                            </template> -->
                         </a-input>
-                        <a-input-password v-model:value="result.password" placeholder="input password" />
-                    </div>
+                        <a-input-password v-model:value="result.password" placeholder="password" />
+                    </div> -->
                     <!-- <div>
                         <input type="password" placeholder="ai的key，为空不使用AI" v-model="result.aiKey" />
                         <input type="text" placeholder="ai的模型" v-model="result.aiModel" />
@@ -73,11 +66,10 @@
 </template>
 <script setup>
 import { UserOutlined } from '@ant-design/icons-vue';
-import { Modal } from 'ant-design-vue';
 
 import { ref, reactive, watch, onMounted } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList, versionCheck } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
@@ -474,41 +466,10 @@ const getUserListShowAsk = async () => {
         console.error("获取用户列表失败:", e);
     }
 };
-const checkAppVersion = async () => {
-    try {
-        var chckInfo = await versionCheck();
-        if (chckInfo.showPop) {
-            Modal.success({
-                title: chckInfo.title,
-                content: chckInfo.newInfo,
-                okText: chckInfo.okText,
-                okType: chckInfo.okType,
-                okButtonProps: chckInfo.okButtonProps,
-                closable: !chckInfo.mustDown,
-                keyboard: false,
-                maskClosable: false,
-                onOk() {
-                    if (chckInfo.downloadUrl) {
-                        openLink(chckInfo.downloadUrl);
-                    }
-                    checkAppVersion()
-                },
-            });
-        }
-    } catch (e) {
-        console.error("获取用跟新失败:", e);
-    }
-};
-
-const { shell } = require('electron') // 引入 Electron 的 shell 模块
-function openLink(url) {
-    shell.openExternal(url) // 使用 openExternal 方法打开链接
-}
-
 // onMounted(async () => {
 getNumberInfo();
 getUserListShowAsk();
-checkAppVersion()
+
 // });
 
 

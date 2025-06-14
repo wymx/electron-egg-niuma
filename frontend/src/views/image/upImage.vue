@@ -34,15 +34,18 @@
       </div>
 
       <div class="upload-results">
-        <h3>上传结果(右键直接复制)</h3>
-        <div class="result-list">
-          <div v-for="(result, index) in uploadResults" :key="index" class="result-item">
-            <div @contextmenu.prevent="copyUrl(result.url)" class="result-item">
-              <a :href="result.url" target="_blank">{{ result.url }}</a>
-            </div>
-          </div>
-        </div>
+  <div class="results-header">
+    <h3>上传结果</h3>
+    <span class="hint-text">(右键可以直接复制)</span>
+  </div>
+  <div class="result-list">
+    <div v-for="(result, index) in uploadResults" :key="index" class="result-item">
+      <div @contextmenu.prevent="copyUrl(result.url)">
+        <a :href="result.url" target="_blank">{{ result.url }}</a>
       </div>
+    </div>
+  </div>
+</div>
     </div>
   </div>
 </template>
@@ -301,11 +304,6 @@ const copyUrl = (url) => {
   white-space: nowrap;
 }
 
-.upload-results {
-  margin-top: 16px;
-
-}
-
 .result-list {
   display: flex;
   flex-direction: column;
@@ -325,5 +323,30 @@ const copyUrl = (url) => {
 
 .result-item a:hover {
   text-decoration: underline;
+}
+
+.upload-results {
+  display: flex;
+  gap: 16px; /* 控制标题和列表之间的间距 */
+  align-items: flex-start; /* 顶部对齐 */
+}
+
+.results-header {
+  display: flex;
+  flex-direction: column;
+  min-width: 120px; /* 控制标题区域宽度 */
+}
+
+.hint-text {
+  color: #666;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.result-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 </style>
