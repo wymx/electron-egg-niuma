@@ -9,20 +9,20 @@
                         <upload-outlined /> 批量选择图片 (最多 {{ maxFiles }} 张)
                     </a-button>
                     <div v-if="fileList.length > 0" class="file-count">
-                    已选择 {{ fileList.length }} 张图片，总大小 {{ totalSize }}MB
-                </div>
+                        已选择 {{ fileList.length }} 张图片，总大小 {{ totalSize }}MB
+                    </div>
                 </a-upload>
-                
+
                 <div style="display: flex;align-items: center;margin-top: 20px;justify-content: center;">
-                            <div style="margin-right: 10px">输出格式</div>
-                            <a-select v-model:value="outputFormat" style="width: 150px">
-                                <a-select-option value="jpeg">JPEG</a-select-option>
-                                <a-select-option value="png">PNG</a-select-option>
-                                <a-select-option value="webp">WebP</a-select-option>
-                            </a-select>
-                        </div>
-                <a-button type="primary" @click="batchCompress" :disabled="fileList.length === 0"
-                    :loading="compressing" style="margin-top: 20px; width: 300px">
+                    <div style="margin-right: 10px">输出格式</div>
+                    <a-select v-model:value="outputFormat" style="width: 150px">
+                        <a-select-option value="jpeg">JPEG</a-select-option>
+                        <a-select-option value="png">PNG</a-select-option>
+                        <a-select-option value="webp">WebP</a-select-option>
+                    </a-select>
+                </div>
+                <a-button type="primary" @click="batchCompress" :disabled="fileList.length === 0" :loading="compressing"
+                    style="margin-top: 20px; width: 300px">
                     {{ compressing ? `压缩中 (${processedCount}/${fileList.length})` : '开始压缩' }}
                 </a-button>
             </div>
@@ -30,7 +30,7 @@
             <!-- 压缩参数设置 -->
             <div class="compress-settings">
                 <a-card title="压缩设置" size="small">
-                    <a-space direction="vertical" size="large" style="width: 100%">
+                    <a-space direction="vertical" size="small" style="width: 100%">
                         <div>
                             <div style="margin-bottom: 8px">图片质量 ({{ quality }}%)</div>
                             <a-slider v-model:value="quality" :min="10" :max="100" :step="5" />
@@ -43,6 +43,16 @@
                             <div style="margin-bottom: 8px">尺寸调整 ({{ resizePercentage }}%)</div>
                             <a-slider v-model:value="resizePercentage" :min="10" :max="100" :step="5" />
                         </div>
+                        <!-- 在压缩设置卡片中添加 -->
+                        <div>
+                            <div style="display: flex; gap: 10px; align-items: center;justify-content: space-around;">
+                                <a-input-number v-model:value="customWidth" :min="1" placeholder="宽度(px)"
+                                    style="width: 100px" />
+                                <a-input-number v-model:value="customHeight" :min="1" placeholder="高度(px)"
+                                    style="width: 100px" />
+                                <a-checkbox v-model:checked="useCustomSize">启用</a-checkbox>
+                            </div>
+                        </div>
                     </a-space>
                 </a-card>
             </div>
@@ -52,7 +62,7 @@
         <div class="image-list-container">
             <div class="image-list">
                 <a-table :dataSource="fileList" :columns="columns" :pagination="{ pageSize: 10 }" rowKey="uid"
-                    :scroll="{ x: 1200 }">
+                    :scroll="{ x: 900 }">
                     <template #bodyCell="{ column, record }">
                         <!-- 预览列 -->
                         <template v-if="column.key === 'preview'">
@@ -136,6 +146,10 @@ const resizePercentage = ref(100);
 const compressing = ref(false);
 const processedCount = ref(0);
 
+const customWidth = ref(null);
+const customHeight = ref(null);
+const useCustomSize = ref(false);
+            
 // 文件列表
 const maxFiles = 20;
 const fileList = ref([]);
@@ -153,7 +167,7 @@ const columns = [
         dataIndex: 'name',
         key: 'name',
         ellipsis: true,
-        width: 110
+        fixed: 'left',
     },
     {
         title: '预览',
@@ -163,18 +177,18 @@ const columns = [
     {
         title: '原始尺寸',
         key: 'dimensions',
-        width: 120
+        width: 130
     },
     {
         title: '原始大小',
         dataIndex: 'size',
         key: 'size',
-        width: 100
+        width: 110
     },
     {
         title: '压缩后尺寸',
         key: 'compressedDimensions',
-        width: 120
+        width: 130
     },
     {
         title: '压缩后大小',
@@ -190,11 +204,12 @@ const columns = [
     {
         title: '状态',
         key: 'status',
-        width: 150
+        width: 70
     },
     {
         title: '操作',
         key: 'action',
+        fixed: 'right',
         width: 80
     }
 ];
@@ -256,14 +271,19 @@ const batchCompress = async () => {
         try {
             fileItem.status = 'processing';
 
+            // 修改 batchCompress 中的参数传递
+            const options = {
+                quality: quality.value,
+                pngQuality: pngQuality.value,
+                resizePercentage: useCustomSize.value ? null : resizePercentage.value,
+                format: outputFormat.value,
+                customWidth: useCustomSize.value ? customWidth.value : null,
+                customHeight: useCustomSize.value ? customHeight.value : null
+            };
+
             const result = await ipcRenderer.invoke('compress-image', {
                 imageData: fileItem.preview,
-                options: {
-                    quality: quality.value,
-                    pngQuality: pngQuality.value,
-                    resizePercentage: resizePercentage.value,
-                    format: outputFormat.value
-                }
+                options: options
             });
 
             fileItem.compressedData = result.compressedData;
@@ -336,8 +356,8 @@ const downloadImage = async (fileItem) => {
 
 .compress-settings {
     flex: 1;
-    min-width: 300px;
-    max-height: 200px;
+    min-width: 50%;
+    /* max-height: 200px; */
 }
 
 .file-count {

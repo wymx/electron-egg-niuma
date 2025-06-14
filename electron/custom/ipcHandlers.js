@@ -78,12 +78,19 @@ function compressImage() {
 
       // 计算新尺寸
       const metadata = await sharp(inputBuffer).metadata();
-      const newWidth = Math.round(
-        (metadata.width * options.resizePercentage) / 100
-      );
-      const newHeight = Math.round(
-        (metadata.height * options.resizePercentage) / 100
-      );
+      // 修改尺寸计算逻辑
+      let newWidth, newHeight;
+      if (options.customWidth && options.customHeight) {
+        newWidth = options.customWidth;
+        newHeight = options.customHeight;
+      } else {
+        newWidth = Math.round(
+          (metadata.width * options.resizePercentage) / 100
+        );
+        newHeight = Math.round(
+          (metadata.height * options.resizePercentage) / 100
+        );
+      }
 
       // 压缩配置
       const sharpOptions = {
@@ -116,6 +123,16 @@ function compressImage() {
           throw new Error("不支持的输出格式");
       }
 
+      // 修改后的压缩逻辑
+      if (outputBuffer.length >= inputBuffer.length) {
+        return {
+          compressedData: imageData, // 返回原图
+          size: inputBuffer.length,
+          width: metadata.width,
+          height: metadata.height,
+        };
+      }
+
       return {
         compressedData: `data:image/${
           options.format
@@ -133,7 +150,7 @@ function compressImage() {
 // 保存图片处理 (与之前相同)
 function saveImage() {
   ipcMain.handle("save-image", async (event, { dataUrl, defaultPath }) => {
-    const { dialog ,app} = require("electron");
+    const { dialog, app } = require("electron");
     const fs = require("fs");
     const path = require("path");
 
