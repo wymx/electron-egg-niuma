@@ -27,10 +27,6 @@
                     style="margin-left: 20px;">保存当前配置为模版</a-button>
                 <!-- <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button> -->
             </div>
-
-            <div style="display: flex;flex-direction: column;">
-                <!-- <a-button v-if="showAsk" type="primary" size="small" @click="gotoAsk">跳转回复</a-button> -->
-            </div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
             <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
@@ -65,11 +61,10 @@
     </div>
 </template>
 <script setup>
-import { UserOutlined } from '@ant-design/icons-vue';
 
 import { ref, reactive, watch, onMounted } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, askUserList } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
@@ -77,25 +72,6 @@ import { yaml, yamlLanguage } from '@codemirror/lang-yaml'
 import { autocompletion } from '@codemirror/autocomplete'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight' // 语法高亮标签
-
-import { useRouter } from 'vue-router'
-const router = useRouter();
-
-const gotoAsk = () => {
-    if (!result.mobile || result.mobile.length < 1) {
-        alert("没有手机号");
-        return false;
-    }
-    if (!result.password || result.password.length < 1) {
-        alert("没有密码");
-        return false;
-    }
-    const menuInfo = {
-        name: "HomeAutoAsk",
-        query: { mobile: result.mobile, password: result.password }
-    }
-    router.push(menuInfo);
-}
 
 // 创建高亮样式（优先级高于theme）
 const yamlHighlight = HighlightStyle.define([
@@ -113,7 +89,6 @@ const extensions = [
     yaml(),
     syntaxHighlighting(yamlHighlight), // 添加语法高亮
 ]
-
 
 const isStopped = ref(false);//是否正在运行
 const allTempleStr = ref(localStorage.getItem("allTempleStr") || "[]");//存储所有模板数据
@@ -136,13 +111,9 @@ const apiUrl = ref(allData.apiUrl || "");
 const mobile = ref(allData.mobile || "");
 const password = ref(allData.password || "");
 
-
 const infoList = ref("");
 const styledInfoList = ref("");
 const isRuning = ref(false);
-
-let showAsk = ref(false);
-var userList = reactive({});
 
 var changeText = submitQingdan;
 var result = reactive(jsyaml.load(changeText));
@@ -171,7 +142,6 @@ changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
 changeText = changeText.replace('executeMode: ""', `executeMode: "${result.executeMode}"`);
 changeText = changeText.replace('submitNumber: ', `submitNumber: ${result.submitNumber}`);
-
 
 const yamlContent = ref(changeText);
 // console.log("result:", result);
@@ -212,7 +182,6 @@ const parseYaml = async () => {
         if (response) {
             addLinfo("登录成功", 'success');
             addLinfo("开始获取登录信息");
-            getUserListShowAsk();
 
             const response = await currentUserInfo();
             if (response) {
@@ -233,8 +202,6 @@ const parseYaml = async () => {
     }
 
 };
-
-
 const checkInput = (result) => {
     if (!result.mobile || result.mobile.length < 1) {
         addLinfo("没有手机号", 'error');
@@ -262,7 +229,6 @@ const checkInput = (result) => {
         addLinfo("没有提交内容", 'error');
         return false;
     }
-
     // 更新二维数组校验逻辑
     if (result.toUser.length !== result.submitBody.length ||
         !result.submitBody.every(arr => arr.length > 0)) {
@@ -272,7 +238,6 @@ const checkInput = (result) => {
 
     return true;
 };
-
 const submitTimer = async (qdconfig, stopRequest = false) => {
     try {
         if (stopRequest) {
@@ -410,11 +375,6 @@ const saveLocalStorage = () => {
     const allTempleStrNew = JSON.stringify(allTemples);
     localStorage.setItem("allTempleStr", allTempleStrNew);
 }
-const closeApp = () => {
-    const { ipcRenderer } = require('electron');
-    ipcRenderer.send('app-quit');
-}
-
 
 // 登录信息进行请求
 var numberResult = reactive({ t1: 0, t2: 0, t3: 0, t4: 0, t5: 0, t6: 0, t7: 0 });
@@ -454,21 +414,8 @@ watch(
         percent.value = (newVal / result.submitNumber) * 100;
     }
 );
-const getUserListShowAsk = async () => {
-    try {
-        var userInfo = await askUserList();
-        if (userInfo.showAll) {
-            showAsk.value = true;
-        } else {
-            showAsk = userInfo.userList.some(item => item.mobile === result.mobile);
-        }
-    } catch (e) {
-        console.error("获取用户列表失败:", e);
-    }
-};
 // onMounted(async () => {
 getNumberInfo();
-getUserListShowAsk();
 
 // });
 
