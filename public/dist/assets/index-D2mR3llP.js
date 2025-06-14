@@ -1,0 +1,1 @@
+import{_ as e,d as s,o as n}from"./index-DFK0ryvj.js";const r=e({},[["render",function(e,r){return n(),s("div",null," 暂无内容 ")}],["__file","/Users/UED/Desktop/test/electron-egg/frontend/src/views/home/index.vue"]]);export{r as default};

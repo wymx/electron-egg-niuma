@@ -1,6 +1,6 @@
 <template>
     <div>
-        暂无内容
+        1.0发布了
     </div>
 </template>
 <script setup>

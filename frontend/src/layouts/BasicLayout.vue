@@ -33,7 +33,7 @@
                             </template>
                             首页
                         </a-menu-item>
-                        <a-menu-item key="/qdAuto" v-if="level >= 0">
+                        <a-menu-item key="/qdAuto" v-if="level >= 1">
                             <template #icon>
                                 <unordered-list-outlined />
                             </template>
