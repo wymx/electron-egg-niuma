@@ -10,5 +10,8 @@ contextBridge.exposeInMainWorld('electron', {
 })
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  quitApp: () => ipcRenderer.send('app-quit')
+  createRoom: (userName, roomName) => ipcRenderer.invoke('create-room', userName, roomName),
+  getRoomList: () => ipcRenderer.invoke('get-room-list'),
+  leaveRoom: (roomCode, userName) => ipcRenderer.invoke('leave-room', roomCode, userName),
+  getWsPort: () => ipcRenderer.invoke('get-ws-port')
 });

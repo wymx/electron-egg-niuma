@@ -11,6 +11,9 @@ const {
   saveImage,
 } = require("./custom/ipcHandlers");
 
+const { initRoomService } = require("./custom/room"); // 新增导入
+
+
 const { cleanAppCache } = require("./custom/cacheCleaner");
 cleanAppCache();
 
@@ -37,6 +40,7 @@ function initializeIpc() {
   registerVersionHandler();
   compressImage();
   saveImage();
+  initRoomService(); // 初始化房间服务
 }
 initializeIpc();
 // run
