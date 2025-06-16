@@ -127,13 +127,18 @@ module.exports = {
         }
       }, 300000);
 
-      // 广播时使用实际端口
+      // 发布 Bonjour 服务（关键修改）
       const service = bonjour.publish({
         name: `room-${roomCode}-${userName}`,
         type: "electron-room",
         port: server.address().port,
+        txt: {
+          code: roomCode,
+          name: userName,
+        },
       });
       activeRooms.get(roomCode).service = service;
+      console.log(`房间 ${roomCode} 已创建，Bonjour 服务已发布`);
 
       return roomCode;
     });
@@ -181,6 +186,28 @@ module.exports = {
         clients: rooms.get(code)?.size || 0,
         created: activeRooms.get(code).createdAt,
       }));
+    });
+
+    // 在 initRoomService 函数内添加
+    ipcMain.handle("discover-rooms", () => {
+      return new Promise((resolve) => {
+        const browser = bonjour.find({ type: "electron-room" });
+        const discoveredRooms = [];
+
+        browser.on("up", (service) => {
+          discoveredRooms.push({
+            name: service.name.replace(/^room-\w+-/, ""), // 提取房间名
+            code: service.txt.code,
+            port: service.port,
+            host: service.host,
+          });
+        });
+
+        // 2秒后返回结果
+        setTimeout(() => {
+          resolve(discoveredRooms);
+        }, 2000);
+      });
     });
   },
 };

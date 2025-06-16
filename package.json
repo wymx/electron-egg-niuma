@@ -19,7 +19,7 @@
     "build-m": "npm install sharp && ee-bin build --cmds=mac",
     "build-m-arm64": "npm install --os=darwin --cpu=arm64 sharp && ee-bin build --cmds=mac_arm64",
     "build-l": "ee-bin build --cmds=linux",
-    "build-all": "npm run build && npm run build-w && npm run build-m && npm run build-m-arm64"
+    "build-all": "npm run build && npm run build-w && npm run build-m-arm64 && npm run build-m"
   },
   "repository": "https://github.com/dromara/electron-egg.git",
   "keywords": [
