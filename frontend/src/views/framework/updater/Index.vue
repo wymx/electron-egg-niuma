@@ -1,6 +1,6 @@
 <template>
   <div>
-    <iframe src="https://it-tools.tech/" frameborder="0" style="width: 100%; height: 100vh;"
+    <iframe src="https://tool.ymiss.site/" frameborder="0" style="width: 100%; height: 100vh;"
       allowfullscreen></iframe>
 
     <div v-if="false" id="app-updater">
