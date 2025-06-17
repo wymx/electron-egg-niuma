@@ -254,6 +254,33 @@ getNumberInfo();
 </script>
 
 <style scoped>
+:deep(.ant-menu-item) {
+  text-align: left;
+  padding-left: 24px !important;
+}
+
+
+:deep(.ant-menu-title-content) {
+  margin-left: 10px;
+}
+
+/* 修改菜单项和子菜单标题的对齐方式 */
+:deep(.ant-menu-item),
+:deep(.ant-menu-submenu-title) {
+  text-align: left;
+  padding-left: 24px !important;
+}
+
+/* 调整图标和文字间距 */
+:deep(.ant-menu-title-content) {
+  margin-left: 10px;
+}
+
+/* 确保子菜单箭头图标位置正确 */
+:deep(.ant-menu-submenu-arrow) {
+  right: 16px;
+}
+
 .logo {
     width: 100%;
     height: 32px;
