@@ -221,7 +221,6 @@ const binaryToText = (binaryString) => {
       text += String.fromCharCode(parseInt(byte, 2));
     }
   }
-  
   return text;
 };
 
@@ -235,7 +234,7 @@ const downloadImage = (canvas) => {
 
 <style scoped>
 .steganography-card {
-  max-width: 600px;
+  width: 100%;
   margin: 20px auto;
 }
 

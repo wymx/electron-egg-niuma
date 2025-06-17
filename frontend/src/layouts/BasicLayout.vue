@@ -53,7 +53,7 @@
                             <a-menu-item key="/tinyImage" v-if="level >= 10">
                                 <file-zip-outlined /> 压缩图片</a-menu-item>
                             <a-menu-item key="/upImage" v-if="level >= 12"><up-square-outlined /> 上传图片</a-menu-item>
-                            <a-menu-item key="/hideImage" v-if="level >= 20"><profile-outlined /> 信息隐写</a-menu-item>
+                            <a-menu-item key="/hidenInfo" v-if="level >= 15"><profile-outlined /> 信息隐写</a-menu-item>
                         </a-sub-menu>
                         <a-sub-menu key="sub1">
                             <template #icon>

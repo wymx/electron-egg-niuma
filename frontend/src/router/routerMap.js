@@ -28,9 +28,9 @@ const constantRouterMap = [
         meta: { title: "自动回复" },
       },
       {
-        path: "/hideImage",
-        name: "HideImage",
-        component: () => import("@/views/image/hideImage.vue"),
+        path: "/hidenInfo",
+        name: "HidenInfo",
+        component: () => import("@/views/image/hidenInfo.vue"),
         props: true,
         meta: { title: "信息隐写" },
       },
