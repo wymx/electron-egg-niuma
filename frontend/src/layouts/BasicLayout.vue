@@ -45,6 +45,12 @@
                             </template>
                             自动回复
                         </a-menu-item>
+                        <a-menu-item v-if="level >= 20" key="/aiWeb">
+                            <template #icon>
+                                <robot-outlined />
+                            </template>
+                            AI网站聚合
+                        </a-menu-item>
                         <a-sub-menu key="sub2" v-if="level >= 10">
                             <template #icon>
                                 <picture-outlined />
@@ -80,11 +86,6 @@
 import jsyaml from 'js-yaml';
 import { ref, watch, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // 添加 useRoute
-import {
-    HomeOutlined,
-    MessageOutlined,
-    SettingOutlined
-} from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { askUserList, versionCheck,loginUser,currentUserInfo } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'

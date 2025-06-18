@@ -28,6 +28,13 @@ const constantRouterMap = [
         meta: { title: "自动回复" },
       },
       {
+        path: "/aiWeb",
+        name: "AiWeb",
+        component: () => import("@/views/framework/aiWeb.vue"),
+        props: true,
+        meta: { title: "AI网页" },
+      },
+      {
         path: "/hidenInfo",
         name: "HidenInfo",
         component: () => import("@/views/image/hidenInfo.vue"),
