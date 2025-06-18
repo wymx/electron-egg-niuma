@@ -1,22 +1,29 @@
 <template>
     <div style="display: flex;flex-direction: column;">
-        <div style="display: flex;align-items: center;">
-            <div>
+        <div style="display: flex;align-items: center;width: 100%;">
+            <div style="width: 130px;">
                 <div class="text-info">需要回复处理：{{ askList.length }}</div>
                 <div class="text-info">需要评分：{{ pjList.length }}</div>
             </div>
-            <div style="margin-left: 20px;">
+            <div style="margin-left: 20px;width: 80px;">
                 <div class="text-info">已读：{{ readNumber }}</div>
                 <div class="text-info">未读：{{ readNoNumber }}</div>
             </div>
-            <!-- <button @click="gotoHome" style="margin-left: 20px;">回首页</button> -->
-            <a-button type="primary" size="small" @click="gotoHome" style="margin-left: 20px;">回首页</a-button>
-            <!-- <a-button type="primary" size="small" @click="gotoDownload" style="margin-left: 20px;">跳转更新(暂不可用)</a-button> -->
-            <!-- <router-link :to="{ name: menuInfo.pageName, params: menuInfo.params }" style="margin-left: 20px;">
-                <span>跳转更新</span>
-            </router-link> -->
+            <div style="display: flex;align-items: center;width: 80%;text-align: left;">
+                <div v-for="(item, index) in allTemples" :key="item"
+                    style="display: flex;flex-direction: column;margin-left: 8px;width:100px">
+                    <a-input type="text" v-model:value="item.name" style="width:100%;margin-right:5px"
+                        @blur="saveLocalStorage" />
+                    <div style="display: flex;flex-direction: row;justify-content: space-between;margin-top: 5px;">
+                        <a-button type="primary" size="small" @click="useTemple(index)">使用</a-button>
+                        <a-button type="primary" size="small" danger @click="deleteTemple(index)">删除</a-button>
+                    </div>
+                </div>
+                <a-button type="primary" size="small" @click="saveCurrentTemple"
+                    style="margin-left: 20px;">保存当前配置为模版</a-button>
+            </div>
         </div>
-        <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
+        <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);margin-top: 8px;">
             <codemirror ref="mycodemirror" v-model="yamlContent" :disabled="false" :indentWithTab="true"
                 :extensions="extensions" :placeholder="'请输入yaml配置'" :tabSize="2"
                 style="height: 100%;width: 50%;resize: none; text-align: left;" />
@@ -46,19 +53,18 @@ import { tags } from '@lezer/highlight' // 语法高亮标签
 import { useRouter, useRoute } from 'vue-router';
 
 const route = useRoute();
-const router = useRouter();
-const gotoHome = () => {
-    router.push({ name: 'HomeIndex' });
-}
+
 const mobile = ref(route.query.mobile);
 const password = ref(route.query.password);
 
-const menuInfo = {
-    name: "FrameworkUpdaterIndex",
-    params: {}
-}
-const gotoDownload = () => {
-    router.push(menuInfo);
+
+const allTempleStr = ref(localStorage.getItem("allAskTempleStr") || "[]");//存储所有模板数据
+const allTemples = reactive([]);
+try {
+    const parsed = JSON.parse(allTempleStr.value);
+    allTemples.splice(0, allTemples.length, ...parsed); // 保持响应性
+} catch (e) {
+    allTemples.splice(0, allTemples.length); // 清空数组
 }
 
 // 创建高亮样式（优先级高于theme）
@@ -265,6 +271,27 @@ const checkList = async (askconfig) => {
     }
 
 };
+
+const useTemple = (index) => {
+    yamlContent.value = allTemples[index].content
+}
+const saveCurrentTemple = () => {
+    allTemples.push({
+        name: `模版${allTemples.length + 1}`,
+        content: yamlContent.value
+    });
+    saveLocalStorage()
+}
+const deleteTemple = (index) => {
+    allTemples.splice(index, 1);
+    saveLocalStorage()
+}
+
+const saveLocalStorage = () => {
+    const allTempleStrNew = JSON.stringify(allTemples);
+    localStorage.setItem("allAskTempleStr", allTempleStrNew);
+}
+
 
 </script>
 <style scoped>
