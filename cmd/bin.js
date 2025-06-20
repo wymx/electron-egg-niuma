@@ -145,7 +145,7 @@ module.exports = {
       }
     },
     electron: {
-      type: 'confusion',
+      type: 'none',
       files: [
         './public/electron/**/*.(js|json)',
       ],

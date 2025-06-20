@@ -60,8 +60,8 @@ import { Button, DatePicker, Table, Space, message, Card, Form } from 'ant-desig
 const { ipcRenderer } = require("electron");
 import { saveInfo2 } from "../../utils/sendNotify.js";
 
-const account = ref('18956715350'); // 默认值
-const password = ref('qwer123!');   // 默认值
+const account = ref(''); // 默认值
+const password = ref('');   // 默认值
 
 // 新增状态信息
 const statusMessage = ref('');

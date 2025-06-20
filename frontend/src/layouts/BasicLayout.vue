@@ -67,9 +67,7 @@
                             </template>
                             <template #title>其他操作</template>
                             <a-menu-item v-if="showVip && vipLevel.includes('time')" key="/workTime">
-                                <template #icon>
-                                    <field-time-outlined />
-                                </template>
+                                <field-time-outlined />
                                 导出时间
                             </a-menu-item>
                             <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
