@@ -1,5 +1,12 @@
 [
     {
+        "date": "2025-06-20",
+        "title": "版本 1.0.5",
+        "description": "1. 使用puppeteer进行自动化获取数据",
+        "author": "wym",
+        "time": "2025-06-20"
+    },
+    {
         "date": "2025-06-18",
         "title": "版本 1.0.3",
         "description": "1. 自动回复增加模版\n2. 增加AI提示模板",

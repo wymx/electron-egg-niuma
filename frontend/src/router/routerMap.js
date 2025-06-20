@@ -67,6 +67,12 @@ const constantRouterMap = [
         component: () => import("@/views/framework/gameWeb.vue"),
         meta: { title: "更新信息" },
       },
+      {
+        path: "/workTime",
+        name: "WorkTime",
+        component: () => import("@/views/vip/workTime.vue"),
+        meta: { title: "更新信息" },
+      },
     ],
   },
   {

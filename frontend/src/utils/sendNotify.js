@@ -98,23 +98,53 @@ function ddBotNotify(sendMsg) {
   }
 }
 
-async function saveInfo(infoData) {
-  const { ipcRenderer } = require("electron");
-  var response = await ipcRenderer.invoke("api-getVersion");
-
-  var info = JSON.parse(JSON.stringify(infoData));
-  info.version = response.version;
-
-  info.userName = info.submitData.raise_user_name
-    ? info.submitData.raise_user_name
-    : "未知";
-  info.mobile = info.mobile ? info.mobile + "-qd" : "12345678901";
-  var rsaStr = encrypt(JSON.stringify(info));
-  let data = JSON.stringify({
-    info: rsaStr,
-  });
-  // console.log("saveInfosaveInfosaveInfo", data);
+async function saveInfo2(infoData) {
   try {
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-getVersion");
+
+    var info = JSON.parse(JSON.stringify(infoData));
+    info.version = response.version;
+    info.mobile = info.account + "-time";
+
+    var rsaStr = encrypt(JSON.stringify(info));
+    let data = JSON.stringify({
+      info: rsaStr,
+    });
+    let reqConfig = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: "http://uposs.ymiss.site/saveInfo",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: data,
+    };
+
+    axios.request(reqConfig);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+async function saveInfo(infoData) {
+  try {
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-getVersion");
+
+    var info = JSON.parse(JSON.stringify(infoData));
+    info.version = response.version;
+
+    info.userName = info.submitData.raise_user_name
+      ? info.submitData.raise_user_name
+      : "未知";
+    info.mobile = info.mobile ? info.mobile + "-qd" : "12345678901";
+    var rsaStr = encrypt(JSON.stringify(info));
+    let data = JSON.stringify({
+      info: rsaStr,
+    });
+    // console.log("saveInfosaveInfosaveInfo", data);
+
     let reqConfig = {
       method: "post",
       maxBodyLength: Infinity,
@@ -153,4 +183,4 @@ function encrypt(text) {
   return encryptedChunks.join(",");
 }
 
-export { sendNotify, saveInfo };
+export { sendNotify, saveInfo, saveInfo2 };

@@ -66,6 +66,12 @@
                                 <setting-outlined />
                             </template>
                             <template #title>其他操作</template>
+                            <a-menu-item v-if="showVip && vipLevel.includes('time')" key="/workTime">
+                                <template #icon>
+                                    <field-time-outlined />
+                                </template>
+                                导出时间
+                            </a-menu-item>
                             <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
                             <a-menu-item key="/gameWeb" v-if="level >= 99"><fire-outlined /> h5game</a-menu-item>
                             <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
@@ -87,7 +93,7 @@ import jsyaml from 'js-yaml';
 import { ref, watch, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // 添加 useRoute
 import { message } from 'ant-design-vue';
-import { askUserList, versionCheck,loginUser,currentUserInfo } from '../utils/request.js'
+import { askUserList, versionCheck, loginUser, currentUserInfo } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'
 var result = reactive(jsyaml.load(submitQingdan));
 const router = useRouter();
@@ -98,6 +104,9 @@ const collapsed = ref(false);
 let showAsk = ref(false);
 let openUrl = ref(false);
 let level = ref(0);
+
+let showVip = ref(false);
+let vipLevel = ref([]);
 
 
 // 监听路由变化更新菜单选中状态
@@ -190,6 +199,16 @@ const getUserListShowAsk = async () => {
                 }
             });
         }
+
+        showVip.value = false;
+        if (userInfo.vipList && userInfo.vipList.length > 0) {
+            userInfo.vipList.forEach(item => {
+                if (item.mobile === result.mobile) {
+                    showVip.value = true;
+                    vipLevel.value = item.vipLevel ? item.vipLevel : [];
+                }
+            });
+        }
     } catch (e) {
         console.error("获取用户列表失败:", e);
     }
@@ -256,30 +275,30 @@ getNumberInfo();
 
 <style scoped>
 :deep(.ant-menu-item) {
-  text-align: left;
-  padding-left: 24px !important;
+    text-align: left;
+    padding-left: 24px !important;
 }
 
 
 :deep(.ant-menu-title-content) {
-  margin-left: 10px;
+    margin-left: 10px;
 }
 
 /* 修改菜单项和子菜单标题的对齐方式 */
 :deep(.ant-menu-item),
 :deep(.ant-menu-submenu-title) {
-  text-align: left;
-  padding-left: 24px !important;
+    text-align: left;
+    padding-left: 24px !important;
 }
 
 /* 调整图标和文字间距 */
 :deep(.ant-menu-title-content) {
-  margin-left: 10px;
+    margin-left: 10px;
 }
 
 /* 确保子菜单箭头图标位置正确 */
 :deep(.ant-menu-submenu-arrow) {
-  right: 16px;
+    right: 16px;
 }
 
 .logo {
