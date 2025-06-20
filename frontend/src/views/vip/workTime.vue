@@ -170,7 +170,10 @@ function downloadScreenshot() {
     const timestamp = dayjs().format('YYYYMMDDHHmmss');
     const link = document.createElement('a');
     link.href = screenshotUrl.value;
-    link.download = `考勤截图_${timestamp}.png`;
+     const month = selectedMonth.value.month() + 1;
+        const year = selectedMonth.value.year();
+        const dateRange = `${year}${month}`;
+    link.download = `考勤截图_${dateRange}.png`;
     link.click();
 }
 
@@ -204,10 +207,13 @@ async function exportToExcel() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "考勤数据");
 
+         const month = selectedMonth.value.month() + 1;
+        const year = selectedMonth.value.year();
+        const dateRange = `${year}-${month}月份`;
         // 弹出保存对话框
         const { filePath } = await ipcRenderer.invoke('show-save-dialog', {
             title: '保存Excel文件',
-            defaultPath: `考勤数据_${dayjs().format('YYYY-MM-DD')}.xlsx`,
+            defaultPath: `考勤数据_${dateRange}.xlsx`,
             filters: [
                 { name: 'Excel文件', extensions: ['xlsx'] },
                 { name: '所有文件', extensions: ['*'] }
