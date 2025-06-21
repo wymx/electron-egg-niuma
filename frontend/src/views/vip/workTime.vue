@@ -3,10 +3,10 @@
         <div>
             <a-form layout="inline">
                 <a-form-item label="账号">
-                    <a-input v-model:value="account" placeholder="请输入账号" />
+                    <a-input v-model:value="account" placeholder="请输入账号" @change="handleAccountChange" />
                 </a-form-item>
                 <a-form-item label="密码">
-                    <a-input-password v-model:value="password" placeholder="请输入密码" />
+                    <a-input-password v-model:value="password" placeholder="请输入密码"  @change="handlePasswordChange" />
                 </a-form-item>
             </a-form>
             <div v-if="statusMessage" class="status-message">
@@ -16,10 +16,10 @@
         <a-card title="工时记录" size="small">
             <a-space direction="vertical">
                 <div style="display: flex;justify-content: space-between;">
-                    <a-date-picker picker="month" v-model:value="selectedMonth" @change="handleMonthChange"
-                        placeholder="选择月份" />
-                    <a-button type="primary" @click="fetchTimeData">获取工时数据</a-button>
-                    <a-button type="link" @click="exportToExcel">导出Excel</a-button>
+                    <a-date-picker :disabled="!showVip" picker="month" v-model:value="selectedMonth" @change="handleMonthChange"
+                        placeholder="选择月份"  />
+                    <a-button type="primary" :disabled="!showVip" @click="fetchTimeData">获取工时数据</a-button>
+                    <a-button type="link" :disabled="!showVip" @click="exportToExcel">导出Excel</a-button>
                 </div>
                 <a-table :columns="columns" :dataSource="timeList" bordered size="small" rowKey="id">
                 </a-table>
@@ -35,8 +35,8 @@
         <a-card title="请假记录" size="small">
             <a-space direction="vertical">
                 <div style="display: flex;justify-content: space-between;">
-                    <a-button type="primary" @click="fetchTimeData2">获取请假数据</a-button>
-                    <a-button type="link" @click="exportToExcel2">导出Excel</a-button>
+                    <a-button type="primary" :disabled="!showVip" @click="fetchTimeData2">获取请假数据</a-button>
+                    <a-button type="link" :disabled="!showVip" @click="exportToExcel2">导出Excel</a-button>
                 </div>
                 <a-table :columns="columns2" :dataSource="timeList2" bordered size="small" rowKey="id">
                 </a-table>
@@ -59,13 +59,22 @@ const XLSX = require("xlsx");
 import { Button, DatePicker, Table, Space, message, Card, Form } from 'ant-design-vue';
 const { ipcRenderer } = require("electron");
 import { saveInfo2 } from "../../utils/sendNotify.js";
+import { askUserList } from '../../utils/request.js'
+
 
 const account = ref(''); // 默认值
 const password = ref('');   // 默认值
 
+const allResult = ref(localStorage.getItem("timeAccountInfo") || "{}");
+const allData = JSON.parse(allResult.value);
+account.value = allData.account || "";
+password.value = allData.password || "";
 // 新增状态信息
 const statusMessage = ref('');
 const screenshotUrl = ref(null);
+
+let showVip = ref(false);
+let vipLevel = ref([]);
 
 const ADatePicker = DatePicker;
 const AButton = Button;
@@ -86,7 +95,42 @@ const selectedMonth = ref(null);
 const timeList = ref([]);
 
 
+const validateAndSave = () => {
+      if (account.value.length > 0 &&
+        password.value.length > 0) {
+        localStorage.setItem("timeAccountInfo", JSON.stringify({
+            account: account.value,
+            password: password.value
+        }));
+    }
+    getUserListShowAsk();
+};
 
+const handleAccountChange = () => {
+    validateAndSave();
+};
+
+const handlePasswordChange = () => {
+    validateAndSave();
+};
+const getUserListShowAsk = async () => {
+    try {
+        var userInfo = await askUserList();
+        showVip.value = false;
+        if (userInfo.vipList && userInfo.vipList.length > 0) {
+            userInfo.vipList.forEach(item => {
+                if (item.mobile === account.value) {
+                    showVip.value = true;
+                    vipLevel.value = item.vipLevel ? item.vipLevel : [];
+                }
+            });
+        }
+    } catch (e) {
+        console.error("获取用户列表失败:", e);
+    }
+};
+
+getUserListShowAsk();
 // 设置默认月份
 onMounted(() => {
     selectedMonth.value = dayjs();
@@ -170,9 +214,9 @@ function downloadScreenshot() {
     const timestamp = dayjs().format('YYYYMMDDHHmmss');
     const link = document.createElement('a');
     link.href = screenshotUrl.value;
-     const month = selectedMonth.value.month() + 1;
-        const year = selectedMonth.value.year();
-        const dateRange = `${year}${month}`;
+    const month = selectedMonth.value.month() + 1;
+    const year = selectedMonth.value.year();
+    const dateRange = `${year}年-${month}月`;
     link.download = `考勤截图_${dateRange}.png`;
     link.click();
 }
@@ -207,9 +251,9 @@ async function exportToExcel() {
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "考勤数据");
 
-         const month = selectedMonth.value.month() + 1;
+        const month = selectedMonth.value.month() + 1;
         const year = selectedMonth.value.year();
-        const dateRange = `${year}-${month}月份`;
+        const dateRange = `${year}年-${month}月`;
         // 弹出保存对话框
         const { filePath } = await ipcRenderer.invoke('show-save-dialog', {
             title: '保存Excel文件',

@@ -131,7 +131,6 @@ const validateAndSave = () => {
         // 可以在这里添加其他需要触发的逻辑
         // 例如自动检查用户权限
         getUserListShowAsk();
-        getUserListShowAsk();
         getNumberInfo();
     }
 };
