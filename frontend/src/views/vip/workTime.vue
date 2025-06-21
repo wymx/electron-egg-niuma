@@ -21,7 +21,9 @@
                     <a-button type="primary" :disabled="!showVip" @click="fetchTimeData">获取工时数据</a-button>
                     <a-button type="link" :disabled="!showVip" @click="exportToExcel">导出Excel</a-button>
                 </div>
-                <a-table :columns="columns" :dataSource="timeList" bordered size="small" rowKey="id">
+                <a-table :columns="columns" :dataSource="timeList" bordered size="small" rowKey="id" :pagination="{
+                    pageSize:11
+                }">
                 </a-table>
                 <!-- 截图预览 -->
                 <div v-if="screenshotUrl" class="screenshot-preview">
