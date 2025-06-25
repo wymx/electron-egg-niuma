@@ -19,6 +19,10 @@ import { ConfigProvider } from 'ant-design-vue';
 const AConfigProvider = ConfigProvider;
 import zhCN from 'ant-design-vue/es/locale/zh_CN';
 
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+dayjs.locale('zh-cn');
+
 const isDev = ref(process.env.NODE_ENV === 'development');
 onMounted(() => {
   const loadingElement = document.getElementById('loadingPage');
