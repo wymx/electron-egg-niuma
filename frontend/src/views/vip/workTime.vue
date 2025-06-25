@@ -6,7 +6,7 @@
                     <a-input v-model:value="account" placeholder="请输入账号" @change="handleAccountChange" />
                 </a-form-item>
                 <a-form-item label="密码">
-                    <a-input-password v-model:value="password" placeholder="请输入密码"  @change="handlePasswordChange" />
+                    <a-input-password v-model:value="password" placeholder="请输入密码" @change="handlePasswordChange" />
                 </a-form-item>
             </a-form>
             <div v-if="statusMessage" class="status-message">
@@ -16,13 +16,13 @@
         <a-card title="工时记录" size="small">
             <a-space direction="vertical">
                 <div style="display: flex;justify-content: space-between;">
-                    <a-date-picker :disabled="!showVip" picker="month" v-model:value="selectedMonth" @change="handleMonthChange"
-                        placeholder="选择月份"  />
+                    <a-date-picker :disabled="!showVip" picker="month" v-model:value="selectedMonth"
+                        @change="handleMonthChange" placeholder="选择月份" />
                     <a-button type="primary" :disabled="!showVip" @click="fetchTimeData">获取工时数据</a-button>
                     <a-button type="link" :disabled="!showVip" @click="exportToExcel">导出Excel</a-button>
                 </div>
                 <a-table :columns="columns" :dataSource="timeList" bordered size="small" rowKey="id" :pagination="{
-                    pageSize:11
+                    pageSize: 11
                 }">
                 </a-table>
                 <!-- 截图预览 -->
@@ -98,7 +98,7 @@ const timeList = ref([]);
 
 
 const validateAndSave = () => {
-      if (account.value.length > 0 &&
+    if (account.value.length > 0 &&
         password.value.length > 0) {
         localStorage.setItem("timeAccountInfo", JSON.stringify({
             account: account.value,

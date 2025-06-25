@@ -6,6 +6,10 @@ import './assets/global.less';
 import components from './components/global';
 import Router from './router/index';
 
+import dayjs from 'dayjs';
+import 'dayjs/locale/zh-cn';
+dayjs.locale('zh-cn');
+
 const app = createApp(App)
 
 // components
