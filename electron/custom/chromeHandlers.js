@@ -172,8 +172,7 @@ async function runPuppeteerWithElectronChromium(pie) {
         });
         // 等待足够时间确保请求完成
         // 确保所有操作完成
-        await new Promise(resolve => setTimeout(resolve, 5000));
-
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         // 等待页面完全加载
         await page.waitForSelector(".out_view_item-innerText", {
@@ -345,8 +344,7 @@ async function runPuppeteerWithElectronChromium(pie) {
       });
       // 等待足够时间确保请求完成
       // 确保所有操作完成
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       // 等待页面完全加载
       await page.waitForSelector(".out_view_item-innerText", {
@@ -374,8 +372,7 @@ async function runPuppeteerWithElectronChromium(pie) {
         }
       });
 
-      await new Promise(resolve => setTimeout(resolve, 5000));
-
+      await new Promise((resolve) => setTimeout(resolve, 5000));
 
       event.sender.send("puppeteer-progress", {
         status: "加载完成，网页截图中...",

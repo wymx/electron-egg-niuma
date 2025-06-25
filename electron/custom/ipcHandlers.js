@@ -2,13 +2,13 @@ const { ipcMain } = require("electron");
 const { net } = require("electron");
 const path = require("path");
 const pkg = require(path.join(__dirname, "../../../package.json"));
-
+const { dialog, app } = require("electron");
 // 应用命令处理
 function registerAppHandlers() {
   ipcMain.on("app-quit", () => {
-    const { app } = require("electron");
     app.quit();
   });
+  app.commandLine.appendSwitch("lang", "zh-CN");
 }
 
 // API 请求处理
@@ -150,7 +150,7 @@ function compressImage() {
 // 保存图片处理 (与之前相同)
 function saveImage() {
   ipcMain.handle("save-image", async (event, { dataUrl, defaultPath }) => {
-    const { dialog, app } = require("electron");
+    
     const fs = require("fs");
     const path = require("path");
 
