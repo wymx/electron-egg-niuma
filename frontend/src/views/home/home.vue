@@ -51,15 +51,19 @@
                 </div>
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
-                <div><a-button type="primary" @click="parseYaml('send')" :disabled="isRuning">开始执行</a-button>
-                <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button></div>
-                <div>
-                    <a-input v-model:value="deletNum" placeholder="请输入数字" :showCount="true"></a-input>
-                    <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum }}个字符的清单</a-button>
+                <div style="margin-top: 20px;">
+                    <a-button type="primary" @click="parseYaml('send')" :disabled="isRuning">开始执行</a-button>
+                    <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button>
+                </div>
+                <div style="margin-top: 20px;">
+                    <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1"></a-input>
+                    <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum
+                        }}个字符的清单</a-button>
                 </div>
             </div>
         </div>
     </div>
+
 </template>
 <script setup>
 
@@ -243,8 +247,13 @@ const checkInput = (result) => {
 
     return true;
 };
-const deletNum = ref(10);//删除低于多少个字符的清单
+const deletNum = ref(5);//删除低于多少个字符的清单
+
 const deleteList = async () => {
+    if (deletNum.value <= 0) {
+        addLinfo("请输入大于0的数字", 'error');
+        return;
+    }
     try {
         addLinfo("登录成功，开始检查总清单数量", 'success');
         var submitStr = await getQdList(1);
@@ -453,7 +462,9 @@ watch(
 getNumberInfo();
 
 // });
-
+watch(() => deletNum.value, (newVal) => {
+    if (newVal <= 0) deletNum.value = 1; // 强制修正为1
+});
 
 
 </script>
