@@ -205,7 +205,8 @@ async function fetchTimeData() {
         statusMessage.value = "";
         message.success('数据获取成功,查看截图');
     } catch (error) {
-        console.error("详细错误:", error);
+        // console.error("详细错误:", error);
+        statusMessage.value = "";
         message.error('数据获取失败');
     }
 }

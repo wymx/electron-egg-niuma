@@ -649,19 +649,48 @@ async function batchPush(fiveInventoryId, taskId, tokens) {
     return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
   }
 }
-
-async function deletFromId(fiveInventoryId, tokens) {
+async function getQdList(pageSize) {
+  try {
+    const url = `https://dida.homedo.com/api/visualdev/OnlineDev/537986998195978437/List`;
+    let data = JSON.stringify({
+      currentPage: 1,
+      page: 1,
+      size: pageSize,
+      pageSize: pageSize,
+      modelId: "537986998195978437",
+      menuId: "537996674790893509",
+      queryJson: "",
+      superQueryJson: "",
+      sort: "desc",
+      sidx: "",
+    });
+    let config = {
+      method: "post",
+      url: url,
+      headers: getHeaders(usertoken),
+      data: data,
+    };
+    const response = await axios.request(config);
+    // console.log(response.data, "list/response.data");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+async function deletFromId(fiveInventoryId) {
   try {
     const url = `https://dida.homedo.com/api/visualdev/OnlineDev/537986998195978437/${fiveInventoryId}`;
     let data = JSON.stringify({});
     let config = {
       method: "delete",
       url: url,
-      headers: getHeaders(tokens),
+      headers: getHeaders(usertoken),
       data: data,
     };
     const response = await axios.request(config);
-    console.log(response.data, "deleted/response.data");
+    // console.log(response.data, "deleted/response.data");
+    return response.data.msg;
   } catch (error) {
     console.error("Error fetching data:", error);
     return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
@@ -799,4 +828,6 @@ export {
   askUserList,
   versionCheck,
   templateList,
+  getQdList,
+  deletFromId,
 };

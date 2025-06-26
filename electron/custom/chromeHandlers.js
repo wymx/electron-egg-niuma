@@ -9,7 +9,10 @@ async function runPuppeteerWithElectronChromium(pie) {
       // 添加进度通知
       event.sender.send("puppeteer-progress", { status: "开始" });
       try {
-        const browser = await pie.connect(app, puppeteer);
+        const browser = await pie.connect(app, puppeteer, {
+          args: ["--incognito"],
+        });
+
         const window = new BrowserWindow({
           width: 1200, // 初始宽度
           height: 800, // 初始高度
@@ -17,6 +20,19 @@ async function runPuppeteerWithElectronChromium(pie) {
         });
         await window.loadURL(url);
         const page = await pie.getPage(browser, window);
+
+        // 2. 双重保障清除cookies
+        try {
+          console.error("CDP清除cookies");
+          const client = await page.target().createCDPSession();
+          await client.send("Network.clearBrowserCookies");
+        } catch (e) {
+          console.error("CDP清除cookies失败:", e);
+          const cookies = await page.cookies();
+          for (const cookie of cookies) {
+            await page.deleteCookie(cookie);
+          }
+        }
 
         await page.setRequestInterception(true);
 
@@ -85,6 +101,26 @@ async function runPuppeteerWithElectronChromium(pie) {
 
         page.on("response", async (response) => {
           var url = response.url();
+          if (
+            url.includes("/Account/Login") &&
+            response.request().method() === "POST" &&
+            response.ok()
+          ) {
+            try {
+              var data = await response.json();
+              console.log("API Success:", data);
+              if (data.Code < 0) {
+                event.sender.send("puppeteer-progress", {
+                  status: data.Message,
+                });
+                dialog.showErrorBox("登录失败", data.Message);
+                page.close();
+                return;
+              }
+            } catch {
+              console.log("API Success (non-JSON):", await response.text());
+            }
+          }
           if (
             //工作时长
             url.includes(

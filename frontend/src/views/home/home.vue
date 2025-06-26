@@ -51,10 +51,12 @@
                 </div>
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
-                <!-- <button @click="parseYaml" :disabled="isRuning">开始执行</button> -->
-                <!-- <button v-show="isRuning" @click="submitTimer(result, true)">停止执行</button> -->
-                <a-button type="primary" @click="parseYaml" :disabled="isRuning">开始执行</a-button>
-                <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button>
+                <div><a-button type="primary" @click="parseYaml('send')" :disabled="isRuning">开始执行</a-button>
+                <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button></div>
+                <div>
+                    <a-input v-model:value="deletNum" placeholder="请输入数字" :showCount="true"></a-input>
+                    <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum }}个字符的清单</a-button>
+                </div>
             </div>
         </div>
     </div>
@@ -63,7 +65,7 @@
 
 import { ref, reactive, watch, onMounted } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, getQdList, deletFromId } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
@@ -144,7 +146,7 @@ changeText = changeText.replace('submitNumber: ', `submitNumber: ${result.submit
 
 const yamlContent = ref(changeText);
 // console.log("result:", result);
-const parseYaml = async () => {
+const parseYaml = async (type) => {
     try {
         const yamlText = yamlContent.value;
         infoList.value = "";
@@ -180,12 +182,16 @@ const parseYaml = async () => {
 
         if (response) {
             addLinfo("登录成功", 'success');
-            addLinfo("开始获取登录信息");
-
+            // addLinfo("开始获取登录信息");
             const response = await currentUserInfo();
             if (response) {
-                addLinfo("获取登录信息成功", 'success');
-                submitTimer(result);
+                // addLinfo("获取登录信息成功", 'success');
+                if (type == "dele") {
+                    deleteList();
+                }
+                if (type == "send") {
+                    submitTimer(result);
+                }
             } else {
                 addLinfo("获取登录信息失败", 'error');
                 isRuning.value = false;
@@ -237,6 +243,36 @@ const checkInput = (result) => {
 
     return true;
 };
+const deletNum = ref(10);//删除低于多少个字符的清单
+const deleteList = async () => {
+    try {
+        addLinfo("登录成功，开始检查总清单数量", 'success');
+        var submitStr = await getQdList(1);
+        // console.log("submitStr:", submitStr);
+        if (submitStr && submitStr.pagination.total > 0) {
+            var allListData = await getQdList(submitStr.pagination.total);
+            var allList = allListData.list;
+            // console.log("总清单数量：" + allList.count, 'success');
+            for (let itemIndex = 0; itemIndex < allList.length; itemIndex++) {
+                var dataInfo = allList[itemIndex];
+                if (dataInfo.body.length <= deletNum.value) {
+                    addLinfo("删除信息：" + dataInfo.body, 'success');
+                    var deleteStr = await deletFromId(dataInfo.id);
+                    addLinfo("删除结果：" + deleteStr, 'success');
+                }
+            }
+            addLinfo("检查完成", 'success');
+        } else {
+            addLinfo("没有需要删除的清单", 'success');
+        }
+    } catch (e) {
+        console.error(e);
+        addLinfo("报错了：" + "\n" + e.message, 'error');
+    } finally {
+        isRuning.value = false;
+    }
+};
+
 const submitTimer = async (qdconfig, stopRequest = false) => {
     try {
         if (stopRequest) {
