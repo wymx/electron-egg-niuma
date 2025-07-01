@@ -697,6 +697,103 @@ async function deletFromId(fiveInventoryId) {
   }
 }
 
+// ai检查
+async function checkQdCanOpen(info) {
+  try {
+    let data = JSON.stringify({
+      bot_id: "7520100610155413504",
+      conversation_id: "Uzvfo4lLgi9XP7-0DCNKq",
+      local_message_id: "Glx4aqICXZOA-pIkS5WjO",
+      content_type: "text",
+      query: `${info},这个是否为形式主义清单？`,
+      user: "123",
+      extra: {},
+      scene: 1000,
+      draft_mode: false,
+      stream: false,
+      chat_history: [],
+      mention_list: [],
+      device_id: "11111111111",
+    });
+    // let config = {
+    //   method: "post",
+    //   url: `https://api.coze.cn/open_api/v1/web_chat`,
+    //   headers: getHeaders(''),
+    //   data: data,
+    // };
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("coze-api-request", {
+      data: data,
+    });
+    if (!response) {
+      throw new Error("API 返回空响应");
+    }
+
+    // 处理可能的非 JSON 响应
+    if (typeof response === "string") {
+      try {
+        response = JSON.parse(response);
+      } catch (e) {
+        throw new Error("API 返回了非 JSON 格式的响应");
+      }
+    }
+
+    const conclusion = extractConclusion(response.data);
+    console.log(conclusion);
+    // console.log(response, `检查详情-----`);
+    return conclusion;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+function extractConclusion(sseResponse) {
+  try {
+    // 1. 首先定位到包含结论的消息
+    const eventData = sseResponse.trim();
+    const jsonStart = eventData.indexOf("data:") + 5;
+    const jsonStr = eventData.slice(jsonStart).trim();
+    const responseObj = JSON.parse(jsonStr);
+
+    // 2. 遍历 messages 查找结论
+    if (responseObj.messages && Array.isArray(responseObj.messages)) {
+      const conclusionMessage = responseObj.messages.find(
+        (msg) =>
+          msg.role === "assistant" &&
+          msg.type === "answer" &&
+          msg.content.includes("- **结论**：")
+      );
+
+      if (conclusionMessage) {
+        // 3. 提取结论部分
+        const conclusionMatch = conclusionMessage.content.match(
+          /- \*\*结论\*\*：(.*?)(\n|$)/
+        );
+        if (conclusionMatch && conclusionMatch[1]) {
+          // 4. 清理结果
+          let result = conclusionMatch[1]
+            .replace(/[\[\]]/g, "") // 去除方括号
+            .replace(/\n/g, " ") // 换行符转空格
+            .trim(); // 去除首尾空格
+
+          // 5. 去除多余的标点（如结尾的句号）
+          if (result.endsWith("。")) {
+            result = result.slice(0, -1);
+          }
+
+          return result;
+        }
+      }
+    }
+
+    return null;
+  } catch (e) {
+    console.error("解析结论失败:", e);
+    return null;
+  }
+}
+
 function getHeaders(tokens) {
   return {
     authorization: `${tokens}`,
@@ -830,4 +927,5 @@ export {
   templateList,
   getQdList,
   deletFromId,
+  checkQdCanOpen,
 };

@@ -238,11 +238,15 @@ async function runPuppeteerWithElectronChromium(pie) {
     }
   );
 
+  // -----------------------------------------------------------------------------------------------------------------------------------------------------
+
   ipcMain.handle("puppeteer-scrape2", async (event, url, account, password) => {
     // 添加进度通知
     event.sender.send("puppeteer-progress", { status: "开始执行...." });
     try {
-      const browser = await pie.connect(app, puppeteer);
+      const browser = await pie.connect(app, puppeteer, {
+        args: ["--incognito"],
+      });
       const window = new BrowserWindow({
         width: 1200, // 初始宽度
         height: 800, // 初始高度

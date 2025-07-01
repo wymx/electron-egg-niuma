@@ -39,6 +39,84 @@ function registerApiHandlers() {
 
     return handleNetRequest(request, data);
   });
+
+  // ai审核
+  ipcMain.handle("coze-api-request", async (event, { data }) => {
+    // const request = net.request({
+    //   method: "POST",
+    //   url: "https://api.coze.cn/open_api/v1/web_chat",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //     Accept: "*/*",
+    //     Origin: "https://api.coze.cn",
+    //   },
+    // });
+
+    // return handleNetRequest(request, data); // 使用你已有的 handleNetRequest 方法
+
+    const https = require('https');
+
+    return new Promise((resolve, reject) => {
+    try {
+      const req = https.request('https://api.coze.cn/open_api/v1/web_chat', {
+        headers: {
+          accept: "*/*",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
+          "cache-control": "no-cache",
+          "content-type": "application/json",
+          pragma: "no-cache",
+          priority: "u=1, i",
+          "sec-ch-ua":
+            '"Google Chrome";v="137", "Chromium";v="137", "Not/A)Brand";v="24"',
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": '"macOS"',
+          "sec-fetch-dest": "empty",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-storage-access": "active",
+        },
+        method: "POST",
+        body: data
+      }, (res) => {
+      let responseData = '';
+      
+      res.on('data', (chunk) => {
+        responseData += chunk.toString();
+        // 处理 SSE 数据格式
+        const events = responseData.split('\n\n');
+        events.forEach(event => {
+          if (event.includes('data:')) {
+            try {
+              // const jsonData = JSON.parse(event.replace('data:', '').trim());
+              // 处理单个事件数据
+            } catch (e) {
+              console.error('Parse error:', e);
+            }
+          }
+        })
+      })
+
+      res.on('end', () => {
+        resolve({
+          code: 200,
+          data: responseData
+        });
+      });
+
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(data);
+    req.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+
+  });
 }
 
 // 版本信息处理
@@ -150,7 +228,6 @@ function compressImage() {
 // 保存图片处理 (与之前相同)
 function saveImage() {
   ipcMain.handle("save-image", async (event, { dataUrl, defaultPath }) => {
-    
     const fs = require("fs");
     const path = require("path");
 

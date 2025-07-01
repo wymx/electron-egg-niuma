@@ -51,14 +51,20 @@
                 </div>
                 <div class="text-info" style="text-align: left;">清单打印信息</div>
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
-                <div style="margin-top: 20px;">
-                    <a-button type="primary" @click="parseYaml('send')" :disabled="isRuning">开始执行</a-button>
-                    <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button>
+                <div style="margin-top: 20px;display: flex;flex-direction: column;">
+                    <div style="display: flex;flex-direction: row;align-items: center;">
+                        <span>形式主义检查，不影响提交，发现后到后台删除</span>
+                        <a-switch v-model:checked="openCheck" size="small" />
+                    </div>
+                    <div style="display: flex;flex-direction: row;">
+                        <a-button type="primary" @click="parseYaml('send')" :disabled="isRuning">开始执行</a-button>
+                        <a-button type="primary" v-show="isRuning" @click="submitTimer(result, true)">停止执行</a-button>
+                    </div>
                 </div>
-                <div style="margin-top: 20px;">
-                    <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1"></a-input>
+                <div style="margin-top: 20px;display: flex;">
+                    <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1" style="width: 100px;"></a-input>
                     <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum
-                        }}个字符的清单</a-button>
+                    }}个字符的清单</a-button>
                 </div>
             </div>
         </div>
@@ -69,7 +75,7 @@
 
 import { ref, reactive, watch, onMounted } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, getQdList, deletFromId } from '../../utils/request.js'
+import { loginUser, submitInfo, currentUserInfo, useMessageAI, numberInfo, getQdList, deletFromId, checkQdCanOpen } from '../../utils/request.js'
 import { submitQingdan } from '../../utils/defualData.js'
 import { Codemirror } from 'vue-codemirror'
 import { EditorView } from '@codemirror/view'
@@ -282,6 +288,7 @@ const deleteList = async () => {
     }
 };
 
+const openCheck = ref(false);
 const submitTimer = async (qdconfig, stopRequest = false) => {
     try {
         if (stopRequest) {
@@ -309,7 +316,21 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                         addLinfo("AI返回数据异常，使用默认值");
                     }
                 }
-                var submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
+
+                var submitStr = "";
+                if (openCheck.value) {
+                    addLinfo("检查当前清单是否为形式主义");
+                    var aicheck = await checkQdCanOpen(aiBackInfo);
+                    if (aicheck == "该五项清单不是形式主义") {
+                        addLinfo("当前清单不是形式主义。开始提交");
+                        // submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
+                    } else if (aicheck == "该五项清单是形式主义") {
+                        addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务,是形式主义。`, 'error');
+                    } else {
+                        addLinfo(`提交给【${targetUser}】的第 ${itemIndex + 1} 项任务,"检查报错了，${aicheck}`, 'error');
+                    }
+                }
+                submitStr = await submitInfo(targetUser, aiBackInfo, qdconfig);
 
                 if (submitStr.indexOf("没有找到touser用户信息") != -1) {
                     addLinfo(submitStr, 'error');
@@ -318,6 +339,9 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                     addLinfo(submitStr, 'error');
                     throw new Error("没有找到用户信息");
                 } else if (submitStr.indexOf("提交失败") != -1) {
+                    addLinfo(submitStr, 'error');
+                    throw new Error("提交失败了，稍后尝试");
+                } else if (submitStr.indexOf("检查报错") != -1) {
                     addLinfo(submitStr, 'error');
                     throw new Error("提交失败了，稍后尝试");
                 } else {
