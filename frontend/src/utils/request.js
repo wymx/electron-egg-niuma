@@ -205,7 +205,7 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
 
         if (qdconfig.submitTest == true) {
           console.log("测试===提交信息", nowTimestr());
-          console.log(qdconfig.submitData);
+          // console.log(qdconfig.submitData);
           saveInfo(qdconfig);
           return "测试===提交：" + bodyInfo + nowTimestr();
         } else {

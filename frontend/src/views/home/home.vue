@@ -179,6 +179,7 @@ const parseYaml = async (type) => {
         const resultNew = jsyaml.load(yamlText);
         result = { ...result, ...resultNew };
         // console.log("Parsed JSON:", JSON.stringify(result));
+        console.log("Parsed JSON:", JSON.stringify(result.sjfTime));
 
         result.toUser = result.submitBodyInfo.map(item => Object.keys(item)[0]);
         result.submitBody = result.submitBodyInfo.map(item => Object.values(item)[0]);
@@ -253,7 +254,7 @@ const checkInput = (result) => {
         addLinfo("发送间隔需要>0", 'error');
         return false;
     }
-    if (!result.sjfTime || result.sjfTime < 0) {
+    if (result.sjfTime < 0) {
         addLinfo("随机间隔需要>=0", 'error');
         return false;
     }
@@ -268,12 +269,12 @@ const checkInput = (result) => {
         return false;
     }
 
-    if (!result.finishTimeType || result.finishTimeType < 0) {
+    if (result.finishTimeType < 0) {
         addLinfo("结束时间(天)需要>=0", 'error');
         return false;
     }
 
-    if (!result.finishTimeAutom || result.finishTimeAutom < 0) {
+    if (result.finishTimeAutom < 0) {
         addLinfo("随机增加分钟需要>=0", 'error');
         return false;
     }
@@ -337,7 +338,7 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
             isStopped.value = false;
 
             const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
-            addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
+            addLinfo(`定时器间隔：${qdconfig.refTime}分钟, 随机0-${qdconfig.sjfTime} 秒`);
             const submitAndLog = async (userIndex, itemIndex) => {
                 // const bodyInfo = qdconfig.submitBody[currentIndex];
                 // addLinfo("开始提交：" + bodyInfo);
@@ -428,7 +429,7 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
             // 新增的公共等待处理函数
             const handleWaiting = async (isLastItem) => {
                 if (!isLastItem) {
-                    const randomSeconds = Math.floor(Math.random() * sjfTime.value) + 1;
+                    const randomSeconds = Math.floor(Math.random() * qdconfig.sjfTime) + 1;
                     const totalWaitTime = interval + (randomSeconds * 1000);
                     addLinfo(`随机等待 ${randomSeconds} 秒 (总等待: ${totalWaitTime / 1000} 秒)`);
                     await new Promise(resolve => setTimeout(resolve, totalWaitTime));
