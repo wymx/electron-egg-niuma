@@ -1,6 +1,6 @@
 {
   "name": "niuma",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "实用型牛马工具",
   "main": "public/electron/main.js",
   "scripts": {
@@ -44,7 +44,7 @@
     "electron-updater": "^6.3.8",
     "puppeteer-core": "^24.10.2",
     "puppeteer-in-electron": "^3.0.5",
-    "sharp": "^0.34.2",
+    "sharp": "^0.34.3",
     "xlsx": "^0.18.5"
   }
 }

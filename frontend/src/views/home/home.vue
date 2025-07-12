@@ -53,7 +53,7 @@
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
                 <div style="margin-top: 20px;display: flex;flex-direction: column;">
                     <div style="display: flex;flex-direction: row;align-items: center;">
-                        <span>形式主义检查，不影响提交，发现后到后台删除</span>
+                        <span>形式主义检查，删除这条到滴答后台</span>
                         <a-switch v-model:checked="openCheck" size="small" />
                     </div>
                     <div style="display: flex;flex-direction: row;">
@@ -62,9 +62,10 @@
                     </div>
                 </div>
                 <div style="margin-top: 20px;display: flex;">
-                    <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1" style="width: 100px;"></a-input>
+                    <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1"
+                        style="width: 100px;"></a-input>
                     <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum
-                    }}个字符的清单</a-button>
+                        }}个字符的清单</a-button>
                 </div>
             </div>
         </div>
@@ -135,6 +136,7 @@ result.mobile = mobile.value;
 result.password = password.value;
 
 const refTime = ref(allData.refTime || 1);//时间间隔
+const sjfTime = ref(allData.sjfTime || 1);//时间间隔(秒)
 const area = ref(allData.area || "FY");
 const level = ref(allData.level || "C");
 const executeMode = ref(allData.executeMode || "");//发送方式
@@ -142,6 +144,7 @@ const submitNumber = ref(allData.submitNumber || 1);//提交数量
 const percent = ref(0);//提交数量
 
 result.refTime = refTime.value;
+result.sjfTime = sjfTime.value;
 result.area = area.value;
 result.level = level.value;
 result.executeMode = executeMode.value;
@@ -149,6 +152,7 @@ result.submitNumber = submitNumber.value;
 
 //将保存的信息显示到左侧输入框中
 changeText = changeText.replace('refTime: ', `refTime: ${result.refTime}`);
+changeText = changeText.replace('sjfTime: ', `sjfTime: ${result.sjfTime}`);
 changeText = changeText.replace('area: ""', `area: "${result.area}"`);
 changeText = changeText.replace('level: ""', `level: "${result.level}"`);
 changeText = changeText.replace('executeMode: ""', `executeMode: "${result.executeMode}"`);
@@ -158,6 +162,9 @@ const yamlContent = ref(changeText);
 // console.log("result:", result);
 const parseYaml = async (type) => {
     try {
+        // 重置停止状态
+        isStopped.value = false;
+
         const yamlText = yamlContent.value;
         infoList.value = "";
         styledInfoList.value = "";
@@ -236,10 +243,41 @@ const checkInput = (result) => {
         addLinfo("没有接收人", 'error');
         return false;
     }
-    if (result.area.length < 1) {
-        addLinfo("没有提出人区域", 'error');
+
+    if (!["0", "1", "2", "3", "4", "5"].includes(result.type)) {
+        addLinfo("无效的清单类型", 'error');
         return false;
     }
+
+    if (!result.refTime || result.refTime <= 0) {
+        addLinfo("发送间隔需要>0", 'error');
+        return false;
+    }
+    if (!result.sjfTime || result.sjfTime < 0) {
+        addLinfo("随机间隔需要>=0", 'error');
+        return false;
+    }
+
+    if (!["NC", "CQ", "FY", "HF", "ZB"].includes(result.area)) {
+        addLinfo("无效的提出人区域", 'error');
+        return false;
+    }
+
+    if (!["A", "B", "C"].includes(result.level)) {
+        addLinfo("无效的紧急程度", 'error');
+        return false;
+    }
+
+    if (!result.finishTimeType || result.finishTimeType < 0) {
+        addLinfo("结束时间(天)需要>=0", 'error');
+        return false;
+    }
+
+    if (!result.finishTimeAutom || result.finishTimeAutom < 0) {
+        addLinfo("随机增加分钟需要>=0", 'error');
+        return false;
+    }
+
     if (result.submitBody.length < 1 || result.submitBody[0].length < 1) {
         addLinfo("没有提交内容", 'error');
         return false;
@@ -293,8 +331,10 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
     try {
         if (stopRequest) {
             addLinfo("已请求停止执行", 'warning');
+            isStopped.value = true;
             throw new Error("用户主动中止循环");
         } else {
+            isStopped.value = false;
 
             const interval = 1000 * 60 * qdconfig.refTime; // 分钟的间隔
             addLinfo(`定时器间隔：${qdconfig.refTime}分钟`);
@@ -352,13 +392,16 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
             const executeStrategies = {
                 userSequence: async () => {
                     for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
+                        if (isStopped.value) return; // 检查停止状态
                         const userTasks = qdconfig.submitBody[userIndex];
                         for (let itemIndex = 0; itemIndex < userTasks.length; itemIndex++) {
-                            if (isRuning.value) {
+                            if (!isStopped.value && isRuning.value) {
+                                // 判断是否是最后一条
+                                const isLastItem = userIndex === qdconfig.toUser.length - 1 &&
+                                    itemIndex === userTasks.length - 1;
                                 await submitAndLog(userIndex, itemIndex);
-                                await new Promise(resolve => setTimeout(resolve, interval));
-                            } else {
-                                return;
+                                await handleWaiting(isLastItem); // 使用公共等待函数
+
                             }
                         }
                     }
@@ -366,13 +409,15 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                 itemCross: async () => {
                     const maxItems = Math.max(...qdconfig.submitBody.map(arr => arr.length));
                     for (let itemIndex = 0; itemIndex < maxItems; itemIndex++) {
+                        if (isStopped.value) return; // 检查停止状态
                         for (let userIndex = 0; userIndex < qdconfig.toUser.length; userIndex++) {
                             if (itemIndex < qdconfig.submitBody[userIndex].length) {
-                                if (isRuning.value) {
+                                if (!isStopped.value && isRuning.value) {
+                                    // 判断是否是最后一条
+                                    const isLastItem = itemIndex === maxItems - 1 &&
+                                        userIndex === qdconfig.toUser.length - 1;
                                     await submitAndLog(userIndex, itemIndex);
-                                    await new Promise(resolve => setTimeout(resolve, interval));
-                                } else {
-                                    return;
+                                    await handleWaiting(isLastItem); // 使用公共等待函数
                                 }
                             }
                         }
@@ -380,12 +425,25 @@ const submitTimer = async (qdconfig, stopRequest = false) => {
                 }
             };
 
+            // 新增的公共等待处理函数
+            const handleWaiting = async (isLastItem) => {
+                if (!isLastItem) {
+                    const randomSeconds = Math.floor(Math.random() * sjfTime.value) + 1;
+                    const totalWaitTime = interval + (randomSeconds * 1000);
+                    addLinfo(`随机等待 ${randomSeconds} 秒 (总等待: ${totalWaitTime / 1000} 秒)`);
+                    await new Promise(resolve => setTimeout(resolve, totalWaitTime));
+                } else {
+                    addLinfo("最后一条，执行结束");
+                }
+            };
+
+
             if (qdconfig.executeMode === "userSequence") {
                 await executeStrategies.userSequence();
             } else {
                 await executeStrategies.itemCross();
             }
-            addLinfo("所有提交已结束，请重新配置");
+            addLinfo("提交已结束，请重新配置");
         }
     } catch (e) {
         if (e.message.includes("中止循环")) {

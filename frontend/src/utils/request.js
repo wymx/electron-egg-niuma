@@ -138,7 +138,16 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
         } else {
           date.setDate(date.getDate() + qdconfig.finishTimeType);
         }
-        date.setHours(23, date.getMinutes(), date.getSeconds(), 0); // 设置时间为23
+        // date.setHours(23, date.getMinutes(), date.getSeconds(), 0); // 设置时间为23
+        // 生成22-23点之间的随机小时
+        const randomHour = 20 + Math.floor(Math.random() * 4); // 在 20:00 到 23:59 之间随机变化
+        // 生成随机分钟(0-59)
+        const randomMinutes = Math.floor(Math.random() * 60);
+        // 生成随机秒数(0-59)
+        const randomSeconds = Math.floor(Math.random() * 60);
+        // 设置随机时间
+        date.setHours(randomHour, randomMinutes, randomSeconds, 0);
+
         // 增加随机分钟逻辑
         if (qdconfig.finishTimeAutom > 0) {
           const currentMinutes = date.getMinutes();
@@ -151,20 +160,29 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
         const getMonthEndTimestamp = date.getTime();
         var endTime = getMonthEndTimestamp;
 
-        // console.log(endTime, "endTime", date);
+        console.log(endTime, "endTime", date);
 
         qdconfig.submitData.finish_time = endTime;
 
-        //设置对 0:会自动填写1或5 1:中心 2:自己 3:对领导 4:对下属 5:对内部
-        console.log(
-          userInfo.centerName,
-          toUserInfo.centerName,
-          "userData.centerName, toUserInfo.centerName"
-        );
+        //设置对 0:会自动填写1/2/3/5 1:中心 2:自己 3:对领导 4:对下属 5:对内部
+        // console.log(
+        //   userInfo.centerName,
+        //   toUserInfo.centerName,
+        //   "userData.centerName, toUserInfo.centerName"
+        // );
         if (userInfo.centerName == toUserInfo.centerName) {
           qdconfig.submitData.type = "5";
           qdconfig.submitData.status = "3";
           qdconfig.submitData.beforeJudge = "2";
+          if (
+            userInfo.manager ==
+            toUserInfo.realName + "/" + userInfo.mobilePhone
+          ) {
+            qdconfig.submitData.type = "3";
+          }
+          if (userInfo.mobile == userInfo.mobilePhone) {
+            qdconfig.submitData.type = "2";
+          }
           if (qdconfig.type != "0") {
             qdconfig.submitData.type = qdconfig.type;
           }
