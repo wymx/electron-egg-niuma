@@ -40,7 +40,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import jsyaml from 'js-yaml';
-import { loginUser, needList, askPreview, pjPreview, setReadStatus } from '../../utils/request.js'
+import { loginUser, needList, askPreview, pjPreview, setReadStatus, autoReplyApi, submitUrl, checkItemDetial } from '../../utils/request.js'
 import { askData } from '../../utils/askData.js'
 
 import { Codemirror } from 'vue-codemirror'
@@ -57,6 +57,8 @@ const route = useRoute();
 const mobile = ref(route.query.mobile);
 const password = ref(route.query.password);
 
+// 先获取 token
+const usertoken = localStorage.getItem("usertoken") || "";
 
 const allTempleStr = ref(localStorage.getItem("allAskTempleStr") || "[]");//存储所有模板数据
 const allTemples = reactive([]);
@@ -170,11 +172,10 @@ const getNumberInfo = async () => {
         readNumber = ref(0);
         readNoNumber = ref(0);
 
-        const tocken = localStorage.getItem("usertoken") || "";
-        if (!tocken) {
+        if (!usertoken) {
             return;
         }
-        const numberData = await needList(tocken);
+        const numberData = await needList(usertoken);
         if (numberData.code == 600 || numberData.msg == "登录过期,请重新登录") {
             const response = await loginUser({
                 mobile: result.mobile,
@@ -182,6 +183,7 @@ const getNumberInfo = async () => {
             });
             console.log("登录信息:", response);
             localStorage.setItem("usertoken", response)
+            usertoken = response;
             // 重新获取数量信息
             getNumberInfo();
         }
@@ -192,7 +194,7 @@ const getNumberInfo = async () => {
                 item.logInfo = "回复";
                 item.isAsk = true;
                 askList.push(item);
-                await setReadStatus(item.iveId, tocken);
+                await setReadStatus(item.iveId, usertoken);
             } else if (item.type == '任务待评分') {
                 item.logInfo = "评分";
                 item.isAsk = false;
@@ -214,8 +216,8 @@ getNumberInfo();
 // 处理数据
 const checkList = async (askconfig) => {
     try {
-        const tocken = localStorage.getItem("usertoken") || "";
-        if (!tocken) {
+
+        if (!usertoken) {
             addLinfo("没有token", 'error');
             isRuning.value = false;
             return;
@@ -242,13 +244,47 @@ const checkList = async (askconfig) => {
                         const randomIndex = Math.floor(Math.random() * askconfig.answer.length);
                         const selectedAnswer = askconfig.answer[randomIndex];
                         addLinfo("随机回复内容:" + selectedAnswer);
-                        if (!askconfig.submitTest) {
-                            const response = await askPreview(item, selectedAnswer, tocken);
-                            addLinfo("处理结果:" + JSON.stringify(response));
+
+                        if (!askconfig.answerUsers.includes(item.raiseUserName)) {
+                            var infoStr = "不自动回复" + item.raiseUserName + "提的清单";
+                            addLinfo(infoStr, 'warning', false);
+                        } else {
+
+                            if (!askconfig.submitTest) {
+                                const response = await askPreview(item, selectedAnswer, usertoken);
+                                addLinfo("处理结果:" + JSON.stringify(response));
+                            }
+
+                            var info = askconfig.autoReply ? "自动回提已打开" : "不需要自动回提";
+                            var type = askconfig.autoReply ? "success" : "warning";
+                            addLinfo(info, type, false);
+
+                            if (askconfig.autoReply && !askconfig.autoReplyUsers.includes(item.raiseUserName)) {
+                                addLinfo("获取当前清单详情", 'info', false);
+                                var responseDetial = await checkItemDetial(item.iveId, usertoken)
+                                if (!responseDetial) {
+                                    addLinfo("获取清单详情失败，将取消当前自动回提", 'error');
+                                }
+                                addLinfo("生成自动回提信息中...", 'info', false);
+                                const responseAiData = await autoReplyApi(item.body);
+                                if (!responseAiData || responseAiData.length < 1) {
+                                    addLinfo("生成自动回提内容失败，将取消当前自动回提", 'error');
+                                }
+                                if (responseDetial && responseAiData) {
+                                    addLinfo("自动回提内容:" + JSON.stringify(responseAiData), "success", false);
+                                    responseDetial.body = responseAiData;
+                                    autoSubmit(responseDetial)
+                                }
+
+                            } else {
+                                var infoStr = "不自动回提" + item.raiseUserName + "提的清单";
+                                addLinfo(infoStr, 'warning', false);
+                            }
                         }
+
                     } else {
                         if (!askconfig.submitTest) {
-                            const response = await pjPreview(item, tocken);
+                            const response = await pjPreview(item, usertoken);
                             console.log("评分结果:", response);
                         }
                     }
@@ -272,6 +308,78 @@ const checkList = async (askconfig) => {
 
 };
 
+const autoSubmit = async (responseDetial) => {
+
+    // 类型4转3，提出人是对下属回提为对领导，其余暂时不变
+    var type = responseDetial.type == "4" ? "3" : responseDetial.type;
+    var submit1 = {
+        id: "",
+        flowId: "",
+        readStatus: "1",
+        isxs: "1",
+        nos: "",
+        task_from: "0",
+        raise_user_id: responseDetial.raise_user_id,
+        raise_user_name: responseDetial.raise_user_name,
+        raise_user_centre: responseDetial.raise_user_centre,
+        type: type,
+        area: result.area,
+        crmArea: "",
+        level: "C",
+        body: responseDetial.body,
+        attach_url: [],
+        owner_user_id: responseDetial.owner_user_id,
+        owner_user_name: responseDetial.owner_user_name,
+        owner_user_centre: responseDetial.owner_user_centre,
+        execute_user_id: [responseDetial.owner_user_id],
+        execute_user_name: responseDetial.owner_user_name,
+        finish_time: 0,
+        beforeJudge: 2,
+        create_time: "",
+        meeting_resolution_time: null,
+        status: 3,
+        jnpf_meeting_task_jnpf_is_satisfaction: "-1"
+    }
+    var submitData = {
+        ...submit1,
+    }
+
+    submitData.finish_time = endTime();
+
+    const timestamp2 = new Date().getTime();
+    var nos = responseDetial.raise_user_id + "" + timestamp2;
+    submitData.nos = nos;
+
+    var dataStr = JSON.stringify(submitData);
+    var submitDataEnd = { id: "", data: dataStr };
+
+    console.log("提交数据:", submitData, usertoken, nos, submitData.type);
+
+    await submitUrl(submitDataEnd, usertoken, nos, submitData.type);
+
+
+};
+
+const endTime = async () => {
+    // 结束时间戳
+    const date = new Date();
+    // 获取当前日期
+    const currentYear = date.getFullYear();
+    const currentMonth = date.getMonth();
+    // 计算下个月的第一天
+    const nextMonthFirstDay = new Date(currentYear, currentMonth + 1, 1);
+    // 设置为下个月第一天的前一天（即本月最后一天）
+    date.setTime(nextMonthFirstDay.getTime() - 1);
+    // 生成22-23点之间的随机小时
+    const randomHour = 20 + Math.floor(Math.random() * 4); // 在 20:00 到 23:59 之间随机变化
+    // 生成随机分钟(0-59)
+    const randomMinutes = Math.floor(Math.random() * 60);
+    // 生成随机秒数(0-59)
+    const randomSeconds = Math.floor(Math.random() * 60);
+    // 设置随机时间
+    date.setHours(randomHour, randomMinutes, randomSeconds, 0);
+    return date.getTime();
+};
 const useTemple = (index) => {
     yamlContent.value = allTemples[index].content
 }

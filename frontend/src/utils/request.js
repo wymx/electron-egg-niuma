@@ -474,6 +474,53 @@ async function askPreview(item, askMsg, tokens) {
   }
 }
 
+// 自动回提清单内容
+async function autoReplyApi(body) {
+  try {
+    let data = JSON.stringify({
+      inputs: {},
+      user: "121",
+      query: body,
+      response_mode: "blocking",
+    });
+    let config = {
+      method: "post",
+      url: `http://agent.homedo.com/v1/chat-messages`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer app-Bd41pDS07Hgr6IgdCqBivbQv`,
+      },
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data.answer, `自动回提清单内容------`);
+    return response.data.answer;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
+async function checkItemDetial(itemId,tokens) {
+  try {
+    let data = JSON.stringify({
+      paramList: [{ field: "invId", defaultValue: itemId }],
+    });
+    let config = {
+      method: "post",
+      url: `https://dida.homedo.com/api/system/DataInterface/540502795636238149/Actions/Preview`,
+      headers: getHeaders(tokens),
+      data: data,
+    };
+    const response = await axios.request(config);
+    console.log(response.data.data, `待处理清单详情------`);
+    return response.data.data[0];
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+
 // 设置为已读状态
 async function setReadStatus(itemId, tokens) {
   try {
@@ -946,4 +993,6 @@ export {
   getQdList,
   deletFromId,
   checkQdCanOpen,
+  autoReplyApi,
+  checkItemDetial,
 };
