@@ -24,17 +24,22 @@ import { useRouter, useRoute } from 'vue-router';
 
 const route = useRoute();
 
+// const askUrl = ref('https://ssc.homedo.com/createPaper?classId=90&examId=104');
 const askUrl = ref('');
 const styledInfoList = ref("");
 
-const mobile = ref(route.query.mobile);
-const password = ref(route.query.password);
+const allResult = ref(localStorage.getItem("allResult") || "{}");
+const allData = JSON.parse(allResult.value);
+
+const mobile = ref(allData.mobile || route.query.mobile);
+const password = ref(allData.password || route.query.password);
 
 // 先获取 token
 var usertoken = '';
 // console.log("result:", result);
 const parseYaml = async () => {
     try {
+        styledInfoList.value = "";
         
         var examId = askUrl.value.match(/examId=(\d+)/);
         var classId = askUrl.value.match(/classId=(\d+)/);
@@ -46,6 +51,10 @@ const parseYaml = async () => {
         classId = classId[1];
         addLinfo(`获取到 examId: ${examId}, classId: ${classId}, 检查当前考试状态`);
 
+        if (!mobile.value) {
+            addLinfo("没有获取到登录的手机号", 'error');
+            return;
+        }
         const response = await loginGxh(mobile.value);
 
         if (!response) {
@@ -65,7 +74,7 @@ const parseYaml = async () => {
         const items = responseList.items;
         console.log("items:", items);
         
-        const currentExam = items.find(item => item.examId == examId && item.classId == classId);
+        const currentExam = items.find(item => item.examId+"" == examId+"" && item.classId+"" == classId+"");
         if (!currentExam) {
             addLinfo("未找到当前考试，请检查 examId 和 classId 是否正确", 'error');
             return;
@@ -113,9 +122,9 @@ const parseYaml = async () => {
             addLinfo("提交失败", 'error');
             return;
         }
-        addLinfo("提交成功", 'success');
-        addLinfo("查看结果：", 'info');
-        addLinfo("https://ssc.homedo.com/tabPage/appStore?menuId1=224&menuId2=119&aipuSchool=2", 'success');
+        addLinfo("提交成功,到后台查看", 'success');
+        // addLinfo("查看结果：", 'info');
+        // addLinfo("https://ssc.homedo.com/tabPage/appStore?menuId1=224&menuId2=119&aipuSchool=2", 'success');
 
 
     } catch (e) {

@@ -91,7 +91,7 @@ async function submitExamInfo(gxhusertoken, submitData) {
   try {
     let data = JSON.stringify(submitData);
     let config = {
-      method: "get",
+      method: "post",
       url: `${API_CONFIG.submitExam}`,
       headers: getHeaders(gxhusertoken),
       data: data,
