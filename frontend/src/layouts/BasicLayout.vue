@@ -70,6 +70,10 @@
                                 <field-time-outlined />
                                 导出时间
                             </a-menu-item>
+                            <a-menu-item v-if="showVip && vipLevel.includes('askMonth')" key="/askMonth">
+                                <field-time-outlined />
+                                自动作答
+                            </a-menu-item>
                             <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
                             <a-menu-item key="/gameWeb" v-if="level >= 99"><fire-outlined /> h5game</a-menu-item>
                             <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
@@ -169,6 +173,13 @@ const handleMenuClick = ({ key }) => {
         if (!validateCredentials()) return;
         const menuInfo = {
             name: "HomeAutoAsk",
+            query: { mobile: result.mobile, password: result.password }
+        }
+        router.push(menuInfo);
+    } else if (key == '/askMonth') {
+        if (!validateCredentials()) return;
+        const menuInfo = {
+            name: "AskMonth",
             query: { mobile: result.mobile, password: result.password }
         }
         router.push(menuInfo);

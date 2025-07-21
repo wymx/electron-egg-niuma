@@ -73,6 +73,12 @@ const constantRouterMap = [
         component: () => import("@/views/vip/workTime.vue"),
         meta: { title: "更新信息" },
       },
+      {
+        path: "/askMonth",
+        name: "AskMonth",
+        component: () => import("@/views/vip/askMonth.vue"),
+        meta: { title: "更新信息" },
+      },
     ],
   },
   {

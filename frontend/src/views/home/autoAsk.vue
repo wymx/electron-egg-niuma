@@ -243,12 +243,13 @@ const checkList = async (askconfig) => {
                     if (item.isAsk) {
                         const randomIndex = Math.floor(Math.random() * askconfig.answer.length);
                         const selectedAnswer = askconfig.answer[randomIndex];
-                        addLinfo("随机回复内容:" + selectedAnswer);
 
-                        if (!askconfig.answerUsers.includes(item.raiseUserName)) {
-                            var infoStr = "不自动回复" + item.raiseUserName + "提的清单";
-                            addLinfo(infoStr, 'warning', false);
+                        if (askconfig.answerUsers.includes(item.raiseUserName)) {
+                            var infoStr = "不自动回复" + item.raiseUserName + "提的清单，跳过当前清单，请手动处理";
+                            addLinfo(infoStr, 'error', false);
                         } else {
+
+                            addLinfo("随机回复内容:" + selectedAnswer);
 
                             if (!askconfig.submitTest) {
                                 const response = await askPreview(item, selectedAnswer, usertoken);
@@ -281,7 +282,6 @@ const checkList = async (askconfig) => {
                                 addLinfo(infoStr, 'warning', false);
                             }
                         }
-
                     } else {
                         if (!askconfig.submitTest) {
                             const response = await pjPreview(item, usertoken);

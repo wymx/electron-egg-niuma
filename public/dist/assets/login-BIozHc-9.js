@@ -1,0 +1,1 @@
+import{_ as e,d as s,e as n,o}from"./index-eq1NznQM.js";const t={class:"login-container"};const r=e({},[["render",function(e,r){return o(),s("div",t,[n(" 登录表单实现 ")])}],["__file","/Users/UED/Desktop/test/electron-egg/frontend/src/views/login.vue"]]);export{r as default};
