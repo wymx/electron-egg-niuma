@@ -274,7 +274,10 @@ const checkList = async (askconfig) => {
                                 if (responseDetial && responseAiData) {
                                     addLinfo("自动回提内容:" + JSON.stringify(responseAiData), "success", false);
                                     responseDetial.body = responseAiData;
-                                    autoSubmit(responseDetial)
+
+                                    if (!askconfig.submitTest) {
+                                        autoSubmit(responseDetial)
+                                    }
                                 }
 
                             } else {
@@ -344,7 +347,7 @@ const autoSubmit = async (responseDetial) => {
         ...submit1,
     }
 
-    submitData.finish_time = endTime();
+    submitData.finish_time = await endTime();
 
     const timestamp2 = new Date().getTime();
     var nos = responseDetial.raise_user_id + "" + timestamp2;
