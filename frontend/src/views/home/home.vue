@@ -22,9 +22,11 @@
                         <a-button type="primary" size="small" danger @click="deleteTemple(index)">删除</a-button>
                     </div>
                 </div>
-                <a-button type="primary" size="small" @click="saveCurrentTemple"
+                <div style="display: flex;flex-direction: column;">
+                    <a-button type="primary" size="small" @click="saveCurrentTemple"
                     style="margin-left: 20px;">保存当前配置为模版</a-button>
-                <!-- <button style="margin-left: 18px;max-height: 50px;" @click="saveCurrentTemple">保存当前配置为模版</button> -->
+                    <a-button style="margin-left: 20px;margin-top: 8px;"  size="small" @click="beforeTemple">上一次提交的配置</a-button>
+                </div>
             </div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
@@ -158,7 +160,7 @@ changeText = changeText.replace('level: ""', `level: "${result.level}"`);
 changeText = changeText.replace('executeMode: ""', `executeMode: "${result.executeMode}"`);
 changeText = changeText.replace('submitNumber: ', `submitNumber: ${result.submitNumber}`);
 
-const yamlContent = ref(changeText);
+var yamlContent = ref(changeText);
 // console.log("result:", result);
 const parseYaml = async (type) => {
     try {
@@ -176,10 +178,11 @@ const parseYaml = async (type) => {
             isRuning.value = false;
             return;
         }
+        localStorage.setItem("oldYaml", yamlText);
         const resultNew = jsyaml.load(yamlText);
         result = { ...result, ...resultNew };
         // console.log("Parsed JSON:", JSON.stringify(result));
-        console.log("Parsed JSON:", JSON.stringify(result.sjfTime));
+        // console.log("Parsed JSON:", JSON.stringify(result.sjfTime));
 
         result.toUser = result.submitBodyInfo.map(item => Object.keys(item)[0]);
         result.submitBody = result.submitBodyInfo.map(item => Object.values(item)[0]);
@@ -224,6 +227,11 @@ const parseYaml = async (type) => {
         isRuning.value = false;
     }
 
+};
+
+const beforeTemple = () => {
+    changeText = localStorage.getItem("oldYaml") || ""
+     yamlContent.value = changeText;
 };
 const checkInput = (result) => {
     if (!result.mobile || result.mobile.length < 1) {
@@ -529,7 +537,6 @@ watch(
             const newNumber = Number(parsed?.submitNumber) || 0;
             result.submitNumber = newNumber; // 更新响应式数据
             localStorage.setItem("allResult", JSON.stringify(result));
-            // console.log(result.submitNumber, "====");
             percent.value = (numberResult.t2 / newNumber) * 100;
         } catch (e) {
             console.error("YAML解析失败", e);

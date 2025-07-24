@@ -238,7 +238,7 @@ const checkList = async (askconfig) => {
             } else {
                 isRuning.value = true;
                 const invId = item.iveId;
-                addLinfo(`${item.logInfo}-第${index + 1}个:${invId}\n${item.body.trim().slice(0, 20)}...`, 'info', false);
+                addLinfo(`${item.logInfo}-第${index + 1}个:${item.raiseUserName}的清单-${invId}\n${item.body.trim().slice(0, 20)}...`, 'info', false);
                 try {
                     if (item.isAsk) {
                         const randomIndex = Math.floor(Math.random() * askconfig.answer.length);
@@ -248,15 +248,13 @@ const checkList = async (askconfig) => {
                             var infoStr = "不自动回复" + item.raiseUserName + "提的清单，跳过当前清单，请手动处理";
                             addLinfo(infoStr, 'error', false);
                         } else {
-
-                            addLinfo("随机回复内容:" + selectedAnswer);
-
+                            addLinfo("随机回复内容:" + selectedAnswer, 'info', false);
                             if (!askconfig.submitTest) {
                                 const response = await askPreview(item, selectedAnswer, usertoken);
                                 addLinfo("处理结果:" + JSON.stringify(response));
                             }
 
-                            var info = askconfig.autoReply ? "自动回提已打开" : "不需要自动回提";
+                            var info = askconfig.autoReply ? "自动回提已打开,开始回提..." : "不需要自动回提,处理下一条";
                             var type = askconfig.autoReply ? "success" : "warning";
                             addLinfo(info, type, false);
 
@@ -280,9 +278,6 @@ const checkList = async (askconfig) => {
                                     }
                                 }
 
-                            } else {
-                                var infoStr = "不自动回提" + item.raiseUserName + "提的清单";
-                                addLinfo(infoStr, 'warning', false);
                             }
                         }
                     } else {
