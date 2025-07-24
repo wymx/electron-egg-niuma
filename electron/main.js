@@ -15,6 +15,11 @@ const {
   runPuppeteerWithElectronChromium,
 } = require("./custom/chromeHandlers");
 
+const {
+  startTV,
+  closeTV,
+} = require("./custom/addTV");
+
 const { cleanAppCache } = require("./custom/cacheCleaner");
 cleanAppCache();
 
@@ -29,6 +34,7 @@ app.register("electron-app-ready", life.electronAppReady);
 app.register("window-ready", life.windowReady);
 app.register("before-close", () => {
   life.beforeClose;
+  closeTV();
 });
 
 // register preload
@@ -45,6 +51,7 @@ function initializeIpc() {
   compressImage();
   saveImage();
   runPuppeteerWithElectronChromium(pie);
+  startTV();
 }
 initializeIpc();
 // run

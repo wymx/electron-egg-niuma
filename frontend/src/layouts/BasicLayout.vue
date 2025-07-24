@@ -71,8 +71,12 @@
                                 导出时间
                             </a-menu-item>
                             <a-menu-item v-if="showVip && vipLevel.includes('askMonth')" key="/askMonth">
-                                <field-time-outlined />
+                                <OrderedListOutlined />
                                 自动作答
+                            </a-menu-item>
+                             <a-menu-item v-if="showVip && vipLevel.includes('tv')" @click="clickVideo">
+                                <YoutubeOutlined />
+                                LibreTV
                             </a-menu-item>
                             <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
                             <a-menu-item key="/gameWeb" v-if="level >= 99"><fire-outlined /> h5game</a-menu-item>
@@ -116,7 +120,10 @@ watch(() => route.path, (newPath) => {
     selectedKeys.value = [newPath];
 });
 
-
+const clickVideo = () => {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.send('open-tv');
+};
 const closeApp = () => {
     const { ipcRenderer } = require('electron');
     ipcRenderer.send('app-quit');
@@ -164,6 +171,12 @@ const validateCredentials = () => {
     return true;
 };
 const handleMenuClick = ({ key }) => {
+
+    // 验证 key 是否有效
+    if (!key || typeof key !== 'string') {
+        console.warn('无效的菜单项 key:', key);
+        return;
+    }
 
     if (key == '/qdAuto') {
         if (!validateCredentials()) return;
