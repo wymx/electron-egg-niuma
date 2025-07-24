@@ -12,6 +12,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 const config = {
   port: process.env.PORT || 8999,
   password: process.env.PASSWORD || 'admin',
@@ -39,9 +40,9 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // res.setHeader('X-Content-Type-Options', 'nosniff');
+  // res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  // res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 });
 
@@ -172,8 +173,7 @@ app.get('/proxy/:encodedUrl', async (req, res) => {
     // 转发响应头（过滤敏感头）
     const headers = { ...response.headers };
     const sensitiveHeaders = (
-      process.env.FILTERED_HEADERS || 
-      'content-security-policy,cookie,set-cookie,x-frame-options,access-control-allow-origin'
+      ''
     ).split(',');
     
     sensitiveHeaders.forEach(header => delete headers[header]);
