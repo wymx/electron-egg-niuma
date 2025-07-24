@@ -272,7 +272,6 @@ const checkList = async (askconfig) => {
                                 if (responseDetial && responseAiData) {
                                     addLinfo("自动回提内容:" + JSON.stringify(responseAiData), "success", false);
                                     responseDetial.body = responseAiData;
-
                                     if (!askconfig.submitTest) {
                                         autoSubmit(responseDetial)
                                     }
@@ -317,20 +316,23 @@ const autoSubmit = async (responseDetial) => {
         isxs: "1",
         nos: "",
         task_from: "0",
-        raise_user_id: responseDetial.raise_user_id,
-        raise_user_name: responseDetial.raise_user_name,
-        raise_user_centre: responseDetial.raise_user_centre,
+        // raise_user_id: responseDetial.raise_user_id,
+        // raise_user_name: responseDetial.raise_user_name,
+        // raise_user_centre: responseDetial.raise_user_centre,
+        raise_user_id: responseDetial.owner_user_id,
+        raise_user_name: responseDetial.owner_user_name,
+        raise_user_centre: responseDetial.owner_user_centre,
         type: type,
         area: result.area,
         crmArea: "",
         level: "C",
         body: responseDetial.body,
         attach_url: [],
-        owner_user_id: responseDetial.owner_user_id,
-        owner_user_name: responseDetial.owner_user_name,
-        owner_user_centre: responseDetial.owner_user_centre,
-        execute_user_id: [responseDetial.owner_user_id],
-        execute_user_name: responseDetial.owner_user_name,
+        owner_user_id: responseDetial.raise_user_id,
+        owner_user_name: responseDetial.raise_user_name,
+        owner_user_centre: responseDetial.raise_user_centre,
+        execute_user_id: [responseDetial.raise_user_id],
+        execute_user_name: responseDetial.raise_user_name,
         finish_time: 0,
         beforeJudge: 2,
         create_time: "",

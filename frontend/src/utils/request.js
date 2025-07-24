@@ -176,11 +176,12 @@ async function submitInfo(toUserName, bodyInfo, qdconfig) {
           qdconfig.submitData.beforeJudge = "2";
           if (
             userInfo.manager ==
-            toUserInfo.realName + "/" + userInfo.mobilePhone
+            toUserInfo.realName + "/" + toUserInfo.mobilePhone
           ) {
             qdconfig.submitData.type = "3";
           }
-          if (userInfo.mobile == userInfo.mobilePhone) {
+          
+          if (userInfo.mobilePhone == toUserInfo.mobilePhone) {
             qdconfig.submitData.type = "2";
           }
           if (qdconfig.type != "0") {
