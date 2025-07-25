@@ -21,6 +21,10 @@
     {
       "from": "build/extraResources",
       "to": "extraResources"
+    },
+    {
+      "from": "electron/LibreTV",
+      "to": "LibreTV"
     }
   ],
   "publish": [

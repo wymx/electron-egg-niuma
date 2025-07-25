@@ -5,24 +5,22 @@ import cors from 'cors';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __dirname = path.dirname(__filename);
+const __dirname = path.dirname("LibreTV");
 
 
 const config = {
-  port: process.env.PORT || 8999,
-  password: process.env.PASSWORD || 'admin',
-  adminpassword: process.env.ADMINPASSWORD || 'admin',
-  corsOrigin: process.env.CORS_ORIGIN || '*',
-  timeout: parseInt(process.env.REQUEST_TIMEOUT || '5000'),
-  maxRetries: parseInt(process.env.MAX_RETRIES || '2'),
-  cacheMaxAge: process.env.CACHE_MAX_AGE || '1d',
-  userAgent: process.env.USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-  debug: process.env.DEBUG === 'true'
+  port:  8999,
+  password: 'admin',
+  adminpassword: 'admin',
+  corsOrigin:  '*',
+  timeout: parseInt('5000'),
+  maxRetries: parseInt('2'),
+  cacheMaxAge: '1d',
+  userAgent:  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+  debug: false,
 };
 
 const log = (...args) => {
@@ -105,10 +103,10 @@ function isValidUrl(urlString) {
     const allowedProtocols = ['http:', 'https:'];
     
     // 从环境变量获取阻止的主机名列表
-    const blockedHostnames = (process.env.BLOCKED_HOSTS || 'localhost,127.0.0.1,0.0.0.0,::1').split(',');
+    const blockedHostnames = ('localhost,127.0.0.1,0.0.0.0,::1').split(',');
     
     // 从环境变量获取阻止的 IP 前缀
-    const blockedPrefixes = (process.env.BLOCKED_IP_PREFIXES || '192.168.,10.,172.').split(',');
+    const blockedPrefixes = ('192.168.,10.,172.').split(',');
     
     if (!allowedProtocols.includes(parsed.protocol)) return false;
     if (blockedHostnames.includes(parsed.hostname)) return false;
