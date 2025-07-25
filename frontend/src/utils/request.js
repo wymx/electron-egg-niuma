@@ -295,7 +295,7 @@ async function submitUrl(submitData, tokens, nos, type) {
       headers: getHeaders(tokens),
       data: datastr,
     };
-    // console.log(config, "config");
+    console.log(config, "config");
     const response = await axios.request(config);
     console.log(response.data, "OnlineDev/response.data");
     if (type != "1") {

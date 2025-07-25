@@ -12,12 +12,13 @@ answerUsers:
   - ""
 
 # 自动回提处理的清单
+# true:自动回提 false:不回提
 autoReply: false
 
 # 不自动回提谁的清单(给自己加上)
 # 建议设置为上级领导和重名的同事
 # 要把自己的设置进去，防止反复回提
-autoReplyUsers: 
+notAutoReplyUsers: 
   - "王伟"
 
 # 自动回提设置区域

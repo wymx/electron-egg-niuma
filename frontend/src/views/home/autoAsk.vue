@@ -258,7 +258,7 @@ const checkList = async (askconfig) => {
                             var type = askconfig.autoReply ? "success" : "warning";
                             addLinfo(info, type, false);
 
-                            if (askconfig.autoReply && !askconfig.autoReplyUsers.includes(item.raiseUserName)) {
+                            if (askconfig.autoReply && !askconfig.notAutoReplyUsers.includes(item.raiseUserName)) {
                                 addLinfo("获取当前清单详情", 'info', false);
                                 var responseDetial = await checkItemDetial(item.iveId, usertoken)
                                 if (!responseDetial) {
@@ -351,8 +351,6 @@ const autoSubmit = async (responseDetial) => {
     var nos = responseDetial.raise_user_id + "" + timestamp2;
     submitData.nos = nos;
 
-    var dataStr = JSON.stringify(submitData);
-    var submitDataEnd = { id: "", data: dataStr };
 
     // 处理提交的类型
     if (responseDetial.owner_user_centre == responseDetial.raise_user_centre) {
@@ -367,6 +365,8 @@ const autoSubmit = async (responseDetial) => {
         submitData.beforeJudge = "1";
     }
 
+    var dataStr = JSON.stringify(submitData);
+    var submitDataEnd = { id: "", data: dataStr };
 
     console.log("提交数据:", submitData, usertoken, nos, submitData.type);
 

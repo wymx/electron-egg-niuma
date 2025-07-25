@@ -55,7 +55,7 @@
                 <div class="log-area" v-html="styledInfoList" disabled="true"></div>
                 <div style="margin-top: 20px;display: flex;flex-direction: column;">
                     <div style="display: flex;flex-direction: row;align-items: center;">
-                        <span>形式主义检查，删除这条到滴答后台</span>
+                        <span>形式主义检查，删除要到滴答后台</span>
                         <a-switch v-model:checked="openCheck" size="small" />
                     </div>
                     <div style="display: flex;flex-direction: row;">
