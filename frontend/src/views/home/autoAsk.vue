@@ -309,6 +309,7 @@ const autoSubmit = async (responseDetial) => {
 
     // 类型4转3，提出人是对下属回提为对领导，其余暂时不变
     var type = responseDetial.type == "4" ? "3" : responseDetial.type;
+    
     var submit1 = {
         id: "",
         flowId: "",
@@ -352,6 +353,20 @@ const autoSubmit = async (responseDetial) => {
 
     var dataStr = JSON.stringify(submitData);
     var submitDataEnd = { id: "", data: dataStr };
+
+    // 处理提交的类型
+    if (responseDetial.owner_user_centre == responseDetial.raise_user_centre) {
+        submitData.status = "3";
+        submitData.beforeJudge = "2";
+        if (responseDetial.owner_user_id == responseDetial.raise_user_id) {
+            submitData.type = "2";
+        }
+    } else {
+        submitData.type = "1";
+        submitData.status = "11";
+        submitData.beforeJudge = "1";
+    }
+
 
     console.log("提交数据:", submitData, usertoken, nos, submitData.type);
 
