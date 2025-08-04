@@ -628,7 +628,27 @@ async function pjPreview(item, tokens) {
     return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
   }
 }
-
+/**
+ * 获取菜单列表
+ */
+async function getMenuList() {
+  try {
+    const { ipcRenderer } = require("electron");
+    var response = await ipcRenderer.invoke("api-user-request", {
+      url: `https://wxqd.ymiss.site/menuList.json?t=${new Date().getTime()}`,
+      method: "GET",
+      data: {},
+    });
+    // console.log("获取用户列表信息:", response);
+    return response;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return null; // 返回 null 而不是空数组，以便在 main 函数中进行检查
+  }
+}
+/**
+ * 获取模板列表
+ */
 async function templateList() {
   try {
     const { ipcRenderer } = require("electron");
@@ -996,4 +1016,5 @@ export {
   checkQdCanOpen,
   autoReplyApi,
   checkItemDetial,
+  getMenuList,
 };

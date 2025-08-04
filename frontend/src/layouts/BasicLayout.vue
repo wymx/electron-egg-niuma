@@ -71,9 +71,17 @@
                                 导出时间
                             </a-menu-item>
                             <a-menu-item v-if="showVip && vipLevel.includes('askMonth')" key="/askMonth">
-                                <field-time-outlined />
+                                <OrderedListOutlined />
                                 自动作答
                             </a-menu-item>
+                            <!-- 循环创建菜单 -->
+                            <block v-for="(menuItem, index) in menuList" :key="menuItem?.key || index"
+                                @click="menuClick(menuItem)">
+                                <a-menu-item v-if="menuItem.isShow">
+                                    <Html5Outlined />
+                                    {{ menuItem.name }}
+                                </a-menu-item>
+                            </block>
                             <a-menu-item key="/updater" v-if="level >= 9"><tool-outlined /> 常用工具</a-menu-item>
                             <a-menu-item key="/gameWeb" v-if="level >= 99"><fire-outlined /> h5game</a-menu-item>
                             <a-menu-item @click="closeApp"><logout-outlined /> 退出程序</a-menu-item>
@@ -95,8 +103,9 @@ import jsyaml from 'js-yaml';
 import { ref, watch, reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router'; // 添加 useRoute
 import { message } from 'ant-design-vue';
-import { askUserList, versionCheck, loginUser, currentUserInfo } from '../utils/request.js'
+import { askUserList, versionCheck, loginUser, currentUserInfo, getMenuList } from '../utils/request.js'
 import { submitQingdan } from '../utils/defualData.js'
+
 var result = reactive(jsyaml.load(submitQingdan));
 const router = useRouter();
 const route = useRoute(); // 获取当前路由
@@ -109,7 +118,7 @@ let level = ref(0);
 
 let showVip = ref(false);
 let vipLevel = ref([]);
-
+let menuList = ref([]);
 
 // 监听路由变化更新菜单选中状态
 watch(() => route.path, (newPath) => {
@@ -188,6 +197,43 @@ const handleMenuClick = ({ key }) => {
     }
     getUserListShowAsk();
 };
+const menuListInfo = async () => {
+    try {
+        let list = await getMenuList();
+        if (Array.isArray(list)) {
+            list = list
+                .filter(item => item && typeof item === 'object')
+                .map(item => {
+                    if (!item) return item;
+                    if (item.isVip && showVip.value &&
+                        Array.isArray(vipLevel.value) &&
+                        vipLevel.value.includes('' + (item.key || ''))) {
+                        item.isShow = true;
+                    } else if (!item.isVip) {
+                        item.isShow = true;
+                    } else {
+                        item.isShow = false;
+                    }
+                    console.log(`菜单项 ${item.name}: isVip=${item.isVip}, key=${item.key}, isShow=${item.isShow}`);
+                    return item;
+                });
+        } else {
+            list = [];
+        }
+        menuList.value = list;
+    } catch (e) {
+        console.error("获取menuList失败:", e);
+        menuList.value = []; // 出错时设为空数组
+    }
+};
+
+const menuClick = async (item) => {
+    try {
+        window.open(item.url);
+    } catch (e) {
+        console.error("获取:", e);
+    }
+};
 
 const getUserListShowAsk = async () => {
     try {
@@ -217,8 +263,13 @@ const getUserListShowAsk = async () => {
                 }
             });
         }
+
+        if (!showVip.value) {
+            vipLevel.value = [];
+        }
     } catch (e) {
         console.error("获取用户列表失败:", e);
+        vipLevel.value = [];
     }
 };
 
@@ -273,11 +324,15 @@ const getNumberInfo = async () => {
     }
 };
 
-// onMounted(async () => {
-getUserListShowAsk();
-checkAppVersion();
-getNumberInfo();
-// });
+// 调整初始化顺序
+const initApp = async () => {
+    await getUserListShowAsk();
+    await checkAppVersion();
+    await getNumberInfo();
+    await menuListInfo();
+};
+
+initApp();
 
 </script>
 
