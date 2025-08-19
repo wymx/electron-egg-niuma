@@ -45,6 +45,12 @@
                             </template>
                             自动回复
                         </a-menu-item>
+                        <a-menu-item v-if="showVip && vipLevel.includes('dayWork')" key="/dayWork">
+                            <template #icon>
+                                <ClockCircleOutlined />
+                            </template>
+                            日报
+                        </a-menu-item>
                         <a-menu-item v-if="level >= 20" key="/aiWeb">
                             <template #icon>
                                 <robot-outlined />
@@ -189,6 +195,14 @@ const handleMenuClick = ({ key }) => {
         if (!validateCredentials()) return;
         const menuInfo = {
             name: "AskMonth",
+            query: { mobile: result.mobile, password: result.password }
+        }
+        router.push(menuInfo);
+    } else if (key == '/dayWork') {
+
+        if (!validateCredentials()) return;
+        const menuInfo = {
+            name: "DayWork",
             query: { mobile: result.mobile, password: result.password }
         }
         router.push(menuInfo);
