@@ -2,6 +2,7 @@ const { Menu, BrowserWindow, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const pkg = require(path.join(__dirname, "../../../package.json"));
+const { net } = require("electron");
 
 module.exports = {
   createMenu: () => {
@@ -92,6 +93,8 @@ module.exports = {
         console.log("资源文件不存在，请检查路径");
       }
 
+      const timelineItems = await generateTimelineItems();
+
       return `data:text/html;charset=UTF-8,${encodeURIComponent(`
             <!DOCTYPE html>
             <html>
@@ -117,7 +120,7 @@ module.exports = {
             <body>
             <div id="app">
                 <el-timeline>
-                ${generateTimelineItems()}
+                ${timelineItems}
                 </el-timeline>
             </div>
             
@@ -142,10 +145,37 @@ module.exports = {
         `)}`;
     }
     // 生成时间线项的函数
-    function generateTimelineItems() {
+    async function generateTimelineItems() {
       try {
-        const changelogData = require("../../../changeLog.json");
-        return changelogData
+        const changelogData = await new Promise((resolve, reject) => {
+          const request = net.request({
+            method: "GET",
+            url: `https://wxqd.ymiss.site/changeLog.json?t=${new Date().getTime()}`,
+          });
+
+          request.on("response", (response) => {
+            let data = "";
+            response.on("data", (chunk) => {
+              data += chunk;
+            });
+            response.on("end", () => {
+              try {
+                resolve(JSON.parse(data));
+              } catch (e) {
+                reject(e);
+              }
+            });
+          });
+
+          request.on("error", (error) => {
+            reject(error);
+          });
+          request.end();
+        });
+        // 确保 changelogData 是数组
+        const items = Array.isArray(changelogData) ? changelogData : [];
+
+        return items
           .map(
             (item) => `
           <el-timeline-item timestamp="${item.date}" placement="top">

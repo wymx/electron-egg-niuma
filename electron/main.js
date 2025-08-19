@@ -48,10 +48,7 @@ function initializeIpc() {
   compressImage();
   saveImage();
   runPuppeteerWithElectronChromium(pie);
-    console.log("即将注册日报处理器");
   runPuppeteerWithElectronChromiumDayWork(pie);
-    console.log("日报处理器注册完成");
-
 }
 initializeIpc();
 // run

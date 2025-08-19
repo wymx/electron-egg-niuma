@@ -5,16 +5,11 @@ const puppeteer = require("puppeteer-core");
 
 var allEvent;
 async function runPuppeteerWithElectronChromiumDayWork(pie) {
-  console.log("开始注册 puppeteer-dayWork 处理器");
-  console.log("pie 对象:", pie);
-
   // 检查是否已经注册过该处理器
   if (ipcMain.eventNames().includes("puppeteer-dayWork")) {
     console.log("puppeteer-dayWork 处理器已经注册，先移除旧的处理器");
     ipcMain.removeHandler("puppeteer-dayWork");
   }
-
-  console.log("正在注册 puppeteer-dayWork 处理器");
 
   ipcMain.handle(
     "puppeteer-dayWork",
