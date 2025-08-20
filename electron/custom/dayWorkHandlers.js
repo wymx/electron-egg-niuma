@@ -153,8 +153,6 @@ async function runPuppeteerWithElectronChromiumDayWork(pie) {
         // const cookies = await page.cookies();
         await page.goto(url);
         // console.log("开始登录");
-        sendMessage(event, "开始登录");
-
         await page.waitForSelector('input[name="mobile"]');
         const uniqueIdElement = await page.$('input[name="mobile"]');
         await uniqueIdElement.type(dayconfig.mobile, { delay: 30 });
@@ -165,6 +163,7 @@ async function runPuppeteerWithElectronChromiumDayWork(pie) {
           delay: 30,
         });
 
+        sendMessage(event, "开始点击登录");
         await page.click(".loginItem .loginBtn");
 
         await new Promise((resolve) =>
@@ -172,9 +171,9 @@ async function runPuppeteerWithElectronChromiumDayWork(pie) {
         );
 
         // 等待页面加载完成
-        await page.waitForSelector(".pageSide .sideMenu .menuUl .menuLi", {
+        await page.waitForSelector(".pageSide", {
           visible: true,
-          timeout: 10000,
+          timeout: 30000,
         });
 
         sendMessage(event, "登录成功，跳转中。。。");
