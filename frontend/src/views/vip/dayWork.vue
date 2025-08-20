@@ -221,6 +221,7 @@ async function startDayWork() {
                 password: result.password,
                 env: result.env,
                 saveSubmit: result.saveSubmit ? result.saveSubmit : false,
+                showWindow: result.showWindow !== undefined ? result.showWindow : false,
                 // 使用 JSON.parse(JSON.stringify()) 来深度克隆并去除响应式包装
                 textareas: result.textareas ? JSON.parse(JSON.stringify(result.textareas)) : [],
                 modelFormData: result.modelFormData ? JSON.parse(JSON.stringify(result.modelFormData)) : {}

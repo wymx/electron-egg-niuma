@@ -22,11 +22,11 @@ async function runPuppeteerWithElectronChromiumDayWork(pie) {
         const browser = await pie.connect(app, puppeteer, {
           args: ["--incognito"],
         });
-
+        var showWindow = dayconfig.showWindow;
         const window = new BrowserWindow({
           width: 1200, // 初始宽度
           height: 800, // 初始高度
-          show: false, // 可选：先隐藏窗口
+          show: showWindow, // 可选：先隐藏窗口
         });
         await window.loadURL(url);
         const page = await pie.getPage(browser, window);

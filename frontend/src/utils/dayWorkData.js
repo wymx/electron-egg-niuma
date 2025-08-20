@@ -11,6 +11,10 @@ saveSubmit: true
 # true:不校验 false:校验 
 notCheckDay: false
 
+# 是否显示窗口
+# true:显示 false:不显示
+showWindow: false 
+
 # 提交信息(这里不做改动，需要改动可以在textareas中配置)
 modelFormData:
   name: "" # 姓名
