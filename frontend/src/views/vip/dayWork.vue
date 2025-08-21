@@ -18,7 +18,8 @@
                 <div style="display: flex;justify-content: space-between;">
                     <a-date-picker v-model:value="selectedDate" @change="handleMonthChange"
                         :disabledDate="disabledDate" />
-                    <a-button type="primary" :disabled="!showVip" @click="startDayWork">开始执行</a-button>
+                    <!-- <a-button type="primary" :disabled="!showVip" @click="startDayWork">开始执行</a-button> -->
+                    <a-button type="primary" :disabled="!showVip" @click="startDayWorkApi">开始执行</a-button>
                 </div>
                 <!-- 预览 -->
                 <div style="display: flex;justify-content: space-between;text-align: left;">
@@ -50,7 +51,7 @@ import { tags } from '@lezer/highlight' // 语法高亮标签
 
 const { ipcRenderer } = require("electron");
 import jsyaml from 'js-yaml';
-import { dayWorkData } from '../../utils/dayWorkData.js'
+import { dayWorkData, loginGxh, toDoTodayList, saveSubmit, updateDraft, getDeptNameFullPath, currentUser, writeDaily } from '../../utils/dayWorkData.js'
 
 import { askUserList } from '../../utils/request.js'
 
@@ -62,7 +63,7 @@ const mobile = ref(route.query.mobile);
 const password = ref(route.query.password);
 
 // 先获取 token
-const usertoken = localStorage.getItem("usertoken") || "";
+var usertoken = localStorage.getItem("usertoken") || "";
 
 const allTempleStr = ref(localStorage.getItem("allDayWorkTempleStr") || "[]");//存储所有模板数据
 const allTemples = reactive([]);
@@ -207,8 +208,8 @@ async function startDayWork() {
                 addLinfo(`今天 (${formattedDate}-${xq}), 需要工作。`);
             }
         }
-        
-        if(notNeedSedn){
+
+        if (notNeedSedn) {
             addLinfo(
                 "跳过当前日期：",
                 `今天 (${formattedDate}-${xq}) 经过假日或周日判断，不需要发送日报。已跳过`
@@ -284,6 +285,265 @@ const addLinfo = (info, type = 'info', addtime = false) => {
 const nowTimestr = () => {
     const now = new Date();
     return now.toLocaleString();
+}
+
+
+
+// --------------使用api------------------
+var userInfo = {};
+var fullPath = '';
+var allEvent = true; // 是否开启所有事件
+async function startDayWorkApi() {
+
+    if (!selectedDate.value) {
+        message.warning('请先选择日期');
+        return;
+    }
+
+    const yamlText = yamlContent.value;
+    if (!yamlText) {
+        console.error("YAML text is empty.");
+        addLinfo("YAML text is empty.", 'error');
+        return;
+    }
+    const resultNew = jsyaml.load(yamlText);
+    result = { ...result, ...resultNew };
+
+    try {
+        styledInfoList.value = "";
+
+        var formattedDate = selectedDate.value.format('YYYY-MM-DD');
+        const xiangqis = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+        const dayIndex = selectedDate.value.day();
+        const xq = xiangqis[dayIndex];
+
+        // 如果要获取具体假日信息：
+        const holidayInfo = holiday[formattedDate];
+        const workdayInfo = workday[formattedDate];
+
+        var notNeedSedn = false;
+        if (!result.notCheckDay) {
+            if (holidayInfo || (xq == "星期日" && !workdayInfo)) {
+                notNeedSedn = true;
+                addLinfo(`今天 (${formattedDate}-${xq}) 不需要发送日报。`);
+            } else {
+                addLinfo(`今天 (${formattedDate}-${xq}), 需要工作。`);
+            }
+        }
+
+        if (notNeedSedn) {
+            addLinfo(
+                "跳过当前日期：",
+                `今天 (${formattedDate}-${xq}) 经过假日或周日判断，不需要发送日报。已跳过`
+            );
+        } else {
+            addLinfo("开始提交日报", 'info');
+            const response = await loginGxh(result.mobile, result.env === '.fat');
+            if (!response) {
+                addLinfo("登录失败", 'error');
+                return;
+            }
+            usertoken = response;
+            addLinfo("登录成功，开始获取信息...", 'success');
+
+            userInfo = await currentUser(usertoken);
+            if (!userInfo) {
+                addLinfo("获取userInfo失败", 'error');
+                return;
+            }
+            console.log("userInfo:", userInfo);
+
+            fullPath = await getDeptNameFullPath(usertoken);
+            if (!fullPath) {
+                addLinfo("获取fullPath失败", 'error');
+                return;
+            }
+            console.log("fullPath:", fullPath);
+
+            checktoDayInfo(usertoken, formattedDate);
+
+
+        }
+
+        // message.success('数据获取成功');
+    } catch (error) {
+        console.error("详细错误:", error);
+
+        // message.error('数据获取失败');
+    }
+}
+
+async function checktoDayInfo(usertoken, formattedDate) {
+
+    const responseList = await toDoTodayList(usertoken, formattedDate);
+
+    if (!responseList) {
+        addLinfo("获取代办列表失败", 'error');
+        return;
+    }
+    addLinfo("获取代办列表成功，开始处理数据", 'success');
+    console.log("responseList:", responseList);
+
+    var submitters = responseList.list;
+    // console.log("今日代办数量：", submitters.length);
+    addLinfo(`今日代办数量: ${submitters.length}`);
+
+    const filteredList = submitters.filter((item) => item.status === 0);
+    // console.log("未提交数量", filteredList.length);
+    addLinfo(`未提交数量: ${filteredList.length}`);
+
+    if (filteredList.length > 0) {
+        const element = filteredList[0];
+        //   console.log("当前提交的id:", element.id);
+        addLinfo(`当前提交的id: ${element.id}`);
+        saveDayWork(element.id, usertoken, formattedDate)
+    } else {
+        //   console.log("没有需要提交的日报");
+        addLinfo("没有需要提交的日报");
+    }
+
+}
+
+async function saveDayWork(elementId, usertoken, formattedDate) {
+
+
+    var writeDailyData = await writeDaily(usertoken, elementId);
+
+    if (!writeDailyData) {
+        addLinfo("获取writeDailyData失败", 'error');
+        return;
+    }
+    console.log("writeDailyData:", writeDailyData);
+
+    const endDate = new Date(formattedDate);
+    endDate.setHours(8, 0, 0, 0); // 设置为当天的08:00:00
+    const endTimestamp = endDate.getTime();
+
+    var formDataCheck = await formDataChange(result);
+
+    var content = { "name": userInfo.userName, "dateTime": endTimestamp, "department": fullPath, "assess": "1", "specialTaskList": [] }
+    content = { ...content, ...formDataCheck.textareaObj };
+
+    var formData = {
+        name: userInfo.userName,
+        content:JSON.stringify(content),
+        dept: `${fullPath}`,
+        specialTaskInfoList: [],
+        submitTime: formattedDate,
+        taskId: 748125,
+        title: `${userInfo.userName}的精进日报`,
+    };
+    var submitFormData = {
+        ...formData,
+        simplyContent:
+            `姓名:${userInfo.userName};日期:${formattedDate};所属部门:${fullPath};${formDataCheck.simplyContent}`,
+        unionInfoList: writeDailyData.unionInfoList,
+        source: 1,
+        type: 1,
+    };
+
+    console.log("提交的数据:", submitFormData);
+     var saveFormData = {
+        ...formData,
+        submitters: writeDailyData.unionInfoList,
+    };
+
+    console.log("保存的数据:", saveFormData);
+
+    if(result.saveSubmit) {
+        // 保存草稿
+        const saveDraftResponse = await updateDraft(usertoken, saveFormData);
+        if (!saveDraftResponse) {
+            addLinfo("保存草稿失败", 'error');
+            return;
+        }
+        addLinfo("草稿保存成功,不要忘记提交", 'success');
+    }else {
+        // 提交
+        const submitResponse = await saveSubmit(usertoken, submitFormData);
+        if (!submitResponse) {
+            addLinfo("提交失败", 'error');
+            return;
+        }
+        addLinfo("提交成功", 'success');
+    }
+}
+
+async function formDataChange(dayconfig) {
+    if (!dayconfig || !dayconfig.textareas || !dayconfig.modelFormData) {
+        addLinfo("配置数据不完整", 'error');
+        return;
+    }
+    var textareaNames = [
+        "一、付出不亚于任何人的努力，谁比你更努力",
+        "二、以终为始，每天完成六件主航道的事",
+        "三、民主生活会改善",
+        "四、需兄弟部门配合与知晓项",
+        "五、明日计划工作项",
+        "六、每天反省二点，并告知伙伴与家人",
+        "七、不受干扰，杜绝感性烦恼，争取每天快乐",
+        "八、纯粹助人，争取每天做三件利他"
+    ];
+    var dayworks = dayconfig.modelFormData;
+    var textareas = dayconfig.textareas;
+    for (const textarea of textareas) {
+        const textareaStr = shuffleArray(
+            textarea.list,
+            textarea.num,
+            textarea.num > 1 ? true : false
+        );
+        dayworks[textarea.name] = textareaStr;
+    }
+
+
+    var simplyContent = "";
+
+    for (let index = 0; index < textareaNames.length; index++) {
+        const inputTitle = textareaNames[index];
+        var keyName = "textarea" + (index + 1);
+        var keyValue = dayworks[keyName] || "";
+        addLinfo("开始设置 " + inputTitle);
+        addLinfo("设置为 " + keyValue);
+        simplyContent += `${inputTitle}:${keyValue};`;
+    }
+
+    const newObject = Object.keys(dayworks)
+        .filter(key => key.includes('textarea'))
+        .reduce((obj, key) => {
+            obj[key] = dayworks[key];
+            return obj;
+        }, {});
+    return {
+        textareaObj: newObject,
+        simplyContent: simplyContent,
+    };
+}
+function shuffleArray(infoArray, limit, needNum = true) {
+    // const limit = 10; // 您希望生成的随机整数个数
+    const min = 0;
+    const max = infoArray.length - 1; // 随机整数的取值范围
+    const limitNo = Math.min(limit, max); // 防止数据数量超过数组长度
+
+    // 创建包含所有可能整数的数组
+    let allNumbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+
+    // 使用Fisher-Yates算法打乱数组顺序
+    for (let i = allNumbers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allNumbers[i], allNumbers[j]] = [allNumbers[j], allNumbers[i]];
+    }
+    // 截取前limit个元素作为随机且不重复的整数
+    let uniqueRandoms = allNumbers.slice(0, limitNo);
+    var infoStr = "";
+    for (let index = 0; index < uniqueRandoms.length; index++) {
+        const element = uniqueRandoms[index];
+        if (infoArray[element] != undefined) {
+            var numberStr = needNum ? index + 1 + "." : "";
+            var addN = uniqueRandoms.length > 1 ? "\n" : "";
+            infoStr += "" + numberStr + infoArray[element] + addN;
+        }
+    }
+    return infoStr;
 }
 
 </script>
