@@ -208,7 +208,7 @@ async function saveSubmit(gxhusertoken, submitData) {
     const response = await axios.request(config);
     console.log(response, "submitResponse");
     if (response.data.code == 2000) {
-      return response.data.data;
+      return true;
     } else {
       return false;
     }

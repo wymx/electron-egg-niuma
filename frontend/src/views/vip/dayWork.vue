@@ -433,10 +433,11 @@ async function saveDayWork(elementId, usertoken, formattedDate) {
         taskId: 748125,
         title: `${userInfo.userName}的精进日报`,
     };
+    var simplyContent = 
+            `姓名:${userInfo.userName};日期:${formattedDate};所属部门:${fullPath};${formDataCheck.simplyContent}`;
     var submitFormData = {
         ...formData,
-        simplyContent:
-            `姓名:${userInfo.userName};日期:${formattedDate};所属部门:${fullPath};${formDataCheck.simplyContent}`,
+        simplyContent: simplyContent.substring(0,200),
         unionInfoList: writeDailyData.unionInfoList,
         source: 1,
         type: 1,
