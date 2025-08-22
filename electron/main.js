@@ -10,6 +10,7 @@ const {
   registerVersionHandler,
   compressImage,
   saveImage,
+  reloadAppHandlers,
 } = require("./custom/ipcHandlers");
 const {
   runPuppeteerWithElectronChromium,
@@ -47,6 +48,7 @@ function initializeIpc() {
   registerVersionHandler();
   compressImage();
   saveImage();
+  reloadAppHandlers();
   runPuppeteerWithElectronChromium(pie);
   runPuppeteerWithElectronChromiumDayWork(pie);
 }

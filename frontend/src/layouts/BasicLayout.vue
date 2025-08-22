@@ -12,6 +12,7 @@
                     <lock-outlined />
                 </template>
             </a-input-password>
+            <a-button type="primary" @click="refApp">刷新</a-button>
         </div>
 
         <div class="main-container">
@@ -135,6 +136,12 @@ watch(() => route.path, (newPath) => {
 const closeApp = () => {
     const { ipcRenderer } = require('electron');
     ipcRenderer.send('app-quit');
+}
+
+const refApp = () => {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.send('app-reload');
+
 }
 
 const allResult = ref(localStorage.getItem("allResult") || "{}");

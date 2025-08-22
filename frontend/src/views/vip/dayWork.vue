@@ -426,32 +426,32 @@ async function saveDayWork(elementId, usertoken, formattedDate) {
 
     var formData = {
         name: userInfo.userName,
-        content:JSON.stringify(content),
+        content: JSON.stringify(content),
         dept: `${fullPath}`,
         specialTaskInfoList: [],
         submitTime: formattedDate,
         taskId: 748125,
         title: `${userInfo.userName}的精进日报`,
     };
-    var simplyContent = 
-            `姓名:${userInfo.userName};日期:${formattedDate};所属部门:${fullPath};${formDataCheck.simplyContent}`;
+    var simplyContent =
+        `姓名:${userInfo.userName};日期:${formattedDate};所属部门:${fullPath};${formDataCheck.simplyContent}`;
     var submitFormData = {
         ...formData,
-        simplyContent: simplyContent.substring(0,200),
+        simplyContent: simplyContent.substring(0, 200),
         unionInfoList: writeDailyData.unionInfoList,
         source: 1,
         type: 1,
     };
 
     console.log("提交的数据:", submitFormData);
-     var saveFormData = {
+    var saveFormData = {
         ...formData,
         submitters: writeDailyData.unionInfoList,
     };
 
     console.log("保存的数据:", saveFormData);
 
-    if(result.saveSubmit) {
+    if (result.saveSubmit) {
         // 保存草稿
         const saveDraftResponse = await updateDraft(usertoken, saveFormData);
         if (!saveDraftResponse) {
@@ -459,7 +459,7 @@ async function saveDayWork(elementId, usertoken, formattedDate) {
             return;
         }
         addLinfo("草稿保存成功,不要忘记提交", 'success');
-    }else {
+    } else {
         // 提交
         const submitResponse = await saveSubmit(usertoken, submitFormData);
         if (!submitResponse) {
@@ -506,6 +506,8 @@ async function formDataChange(dayconfig) {
         addLinfo("开始设置 " + inputTitle);
         addLinfo("设置为 " + keyValue);
         simplyContent += `${inputTitle}:${keyValue};`;
+        // 添加0.3秒延迟
+        await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     const newObject = Object.keys(dayworks)
