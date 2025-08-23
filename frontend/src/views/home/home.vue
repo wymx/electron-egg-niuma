@@ -24,17 +24,19 @@
                 </div>
                 <div style="display: flex;flex-direction: column;">
                     <a-button type="primary" size="small" @click="saveCurrentTemple"
-                    style="margin-left: 20px;">保存当前配置为模版</a-button>
-                    <a-button style="margin-left: 20px;margin-top: 8px;"  size="small" @click="beforeTemple">上一次提交的配置</a-button>
+                        style="margin-left: 20px;">保存当前配置为模版</a-button>
+                    <a-button style="margin-left: 20px;margin-top: 8px;" size="small"
+                        @click="beforeTemple">上一次提交的配置</a-button>
                 </div>
             </div>
         </div>
         <div style="display: flex;flex-direction: row;height: calc(100vh - 40px);">
-            <!-- <textarea name="yaml" id="" v-model="yamlContent" style="height: 100%;width: 30%;resize: none;"
-                spellcheck="false"></textarea> -->
-            <codemirror ref="mycodemirror" v-model="yamlContent" :disabled="false" :indentWithTab="true"
-                :extensions="extensions" :placeholder="'请输入yaml配置'" :tabSize="2"
-                style="height: 100%;width: 50%;resize: none; text-align: left;" />
+            <div style="display: flex;flex-direction: column; padding: 5px;width: 50%;">
+                <!-- <a-button size="small" @click="formatYaml" :disabled="isRuning">格式化 YAML</a-button> -->
+                <codemirror ref="mycodemirror" v-model="yamlContent" :disabled="false" :indentWithTab="true"
+                    :extensions="extensions" :placeholder="'请输入yaml配置'" :tabSize="2"
+                    style="resize: none; text-align: left;" />
+            </div>
             <div style="width: 50%;height: 100%;overflow: auto;">
                 <div class="top">
                     <!-- <div style="display: flex;flex-direction: row;justify-content: space-around;">
@@ -67,7 +69,7 @@
                     <a-input v-model:value="deletNum" placeholder="请输入数字" type="number" min="1"
                         style="width: 100px;"></a-input>
                     <a-button type="primary" :disabled="isRuning" danger @click="parseYaml('dele')">删除低于{{ deletNum
-                        }}个字符的清单</a-button>
+                    }}个字符的清单</a-button>
                 </div>
             </div>
         </div>
@@ -87,6 +89,22 @@ import { autocompletion } from '@codemirror/autocomplete'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 import { tags } from '@lezer/highlight' // 语法高亮标签
 
+// 在现有导入基础上添加
+import { keymap } from '@codemirror/view'
+import { indentWithTab } from '@codemirror/commands'
+
+// 定义格式化快捷键
+const formatKeymap = [
+    {
+        key: "Ctrl-Shift-I",
+        mac: "Cmd-Shift-I",
+        run: () => {
+            formatYaml()
+            return true
+        }
+    }
+]
+
 // 创建高亮样式（优先级高于theme）
 const yamlHighlight = HighlightStyle.define([
     { tag: tags.propertyName, color: "#000" }, // 属性名✅
@@ -102,7 +120,26 @@ const extensions = [
     autocompletion(),
     yaml(),
     syntaxHighlighting(yamlHighlight), // 添加语法高亮
+    keymap.of([indentWithTab, ...formatKeymap]) // 添加快捷键
 ]
+
+// 添加格式化函数
+const formatYaml = () => {
+    try {
+        // 解析当前 YAML 内容
+        const parsed = jsyaml.load(yamlContent.value);
+        // 重新序列化为格式化的 YAML
+        const formatted = jsyaml.dump(parsed, {
+            indent: 2,           // 缩进空格数
+            lineWidth: -1,       // 不限制行宽
+            noRefs: false,        // 不使用引用
+            noCompatMode: false,  // 不使用兼容模式
+        });
+        yamlContent.value = formatted;
+    } catch (error) {
+        addLinfo("YAML 格式化失败: " + error.message, 'error');
+    }
+}
 
 const isStopped = ref(false);//是否正在运行
 const allTempleStr = ref(localStorage.getItem("allTempleStr") || "[]");//存储所有模板数据
@@ -231,7 +268,7 @@ const parseYaml = async (type) => {
 
 const beforeTemple = () => {
     changeText = localStorage.getItem("oldYaml") || ""
-     yamlContent.value = changeText;
+    yamlContent.value = changeText;
 };
 const checkInput = (result) => {
     if (!result.mobile || result.mobile.length < 1) {
