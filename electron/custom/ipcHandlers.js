@@ -119,6 +119,74 @@ function registerApiHandlers() {
       }
     });
   });
+
+  // 获取B站图片处理 - 使用 net.request
+  // 备选方案：使用图片代理服务
+  // 获取B站图片处理 - 使用图片代理服务
+  ipcMain.handle("get-bilibili-image", async (event, imageUrl) => {
+    return new Promise((resolve) => {
+      try {
+        // 使用图片代理服务
+        const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(
+          imageUrl
+        )}&weboptimization=true`;
+        // console.log("Using proxy to download image:", proxyUrl);
+        const request = net.request({
+          method: "GET",
+          url: proxyUrl,
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+          },
+        });
+
+        let chunks = [];
+        request.on("response", (response) => {
+          console.log("Proxy image response status code:", response.statusCode);
+
+          if (response.statusCode === 200) {
+            response.on("data", (chunk) => {
+              chunks.push(chunk);
+            });
+
+            response.on("end", () => {
+              try {
+                const buffer = Buffer.concat(chunks);
+                console.log(
+                  "Proxy image downloaded, size:",
+                  buffer.length,
+                  "bytes"
+                );
+                resolve(buffer.toString("base64"));
+              } catch (error) {
+                console.error(
+                  "Error processing proxy image data:",
+                  error.message
+                );
+                resolve(null);
+              }
+            });
+          } else {
+            console.log(
+              "Proxy image download failed, status:",
+              response.statusCode
+            );
+            resolve(null);
+          }
+        });
+
+        request.on("error", (error) => {
+          console.error("Proxy image download error:", error.message);
+          resolve(null);
+        });
+
+        request.end();
+      } catch (error) {
+        console.error("Proxy image download exception:", error.message);
+        resolve(null);
+      }
+    });
+  });
 }
 
 // 版本信息处理

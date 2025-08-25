@@ -1,6 +1,15 @@
 <template>
     <div>
-        <a-space direction="horizontal" align="start">
+        <div>热点汇总</div>
+        <a-space direction="horizontal" align="start" wrap>
+            <!-- bili卡片 -->
+            <a-card v-if="biliData.length > 0" title="bili" size="small" class="hot-card">
+                <div v-for="(item, index) in biliData" :key="index" class="hot-item">
+                    <img v-if="item.cover" :src="item.cover" alt="" class="hot-item-img">
+                    <a :href="item.link" target="_blank" class="hot-item-link">{{ item.title }}</a>
+                </div>
+            </a-card>
+
             <!-- 微博卡片 -->
             <a-card v-if="weiboData.length > 0" title="微博" size="small" class="hot-card">
                 <div v-for="(item, index) in weiboData" :key="index" class="hot-item">
@@ -32,47 +41,90 @@
                     <a :href="item.link" target="_blank" class="hot-item-link">{{ item.title }}</a>
                 </div>
             </a-card>
+
+            <!-- 肯德基卡片 -->
+            <a-card v-if="kfcData" size="small" class="hot-card">
+                <div class="kfc-content">
+                    <div :class="['kfc-text', { 'expanded': isKfcExpanded }]" :title="kfcData.kfc">
+                        {{ kfcData.kfc }}
+                    </div>
+                    <a v-if="kfcData.kfc && kfcData.kfc.length > 50" @click="toggleKfcExpand" class="expand-link">
+                        {{ isKfcExpanded ? '收起' : '展开' }}
+                    </a>
+                </div>
+            </a-card>
+
         </a-space>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 
-// var hostUrl = "https://60s-cf.114128.xyz/v2";
-var hostUrl = "https://60s-cf.viki.moe/v2";
+// https://docs.60s-api.viki.moe
+// var hostUrl = "https://60s.viki.moe/v2";
+// var hostUrl = "https://60s-cf.viki.moe/v2";
+var hostUrl = "https://60s-cf.114128.xyz/v2";
 
-var weiboData = ref([]);
-var zhihuData = ref([]);
-var douyinData = ref([]);
-var toutiaoData = ref([]);
 
-var list = ["weibo", "zhihu", "douyin", "toutiao"];
+// 为每个数据源创建独立的 ref
+const biliData = ref([]);
+const weiboData = ref([]);
+const zhihuData = ref([]);
+const douyinData = ref([]);
+const toutiaoData = ref([]);
+const kfcData = ref();
+
+var list = ["bili", "weibo", "zhihu", "douyin", "toutiao", "kfc"];
+
+// 肯德基文本展开状态
+const isKfcExpanded = ref(false);
+
+
+// 切换肯德基文本展开状态
+function toggleKfcExpand() {
+    isKfcExpanded.value = !isKfcExpanded.value;
+}
 
 async function requestData(path) {
     try {
+
+        if (path === "bili") {
+            // 如果B站数据为空，尝试使用备用接口获取数据
+            await getBili();
+        }
+
         const config = {
             method: 'get',
             url: `${hostUrl}/${path}`,
         };
 
         const response = await axios.request(config);
-        console.log(response, "submitResponse");
         if (response.data.code == 200) {
-            // 根据不同的请求路径，更新对应的数据
+            // 根据路径更新对应的 ref 数据
             switch (path) {
+                case "bili":
+                    // biliData.value = response.data.data || [];
+                    break;
                 case "weibo":
-                    weiboData.value = response.data.data;
+                    weiboData.value = response.data.data || [];
                     break;
                 case "zhihu":
-                    zhihuData.value = response.data.data;
+                    zhihuData.value = response.data.data || [];
                     break;
                 case "douyin":
-                    douyinData.value = response.data.data;
+                    douyinData.value = response.data.data || [];
                     break;
                 case "toutiao":
-                    toutiaoData.value = response.data.data;
+                    toutiaoData.value = response.data.data || [];
+                    break;
+                case "kfc":
+                    const today = new Date();
+                    var day = today.getDay() === 4;
+                    if (day) {
+                        kfcData.value = response.data.data || "";
+                    }
                     break;
             }
         }
@@ -81,9 +133,86 @@ async function requestData(path) {
     }
 }
 
-// 使用 onMounted 生命周期钩子来发起请求
+// 获取B站热门数据的函数 - 改进版
+async function getBili() {
+    try {
+        const { ipcRenderer } = require("electron");
+        var response = await ipcRenderer.invoke("api-user-request", {
+            url: `https://api.bilibili.com/x/web-interface/popular?ps=20`,
+            method: "GET",
+            data: {},
+        });
+        if (response.code === 0 && response.data && response.data.list) {
+            // 提取需要的字段并格式化
+            const basicData = response.data.list.map(item => ({
+                title: item.title,
+                link: `https://www.bilibili.com/video/${item.bvid}`,
+                cover: `https://images.weserv.nl/?url=${encodeURIComponent(item.pic)}&weboptimization=true`
+            }));
+            biliData.value = basicData;
+
+            // 异步处理图片URL
+            // await processAllBilibiliImages(basicData, response.data.list);
+        }
+
+        console.log("biliData:", biliData.value);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+}
+// 批量处理所有B站图片
+async function processAllBilibiliImages(basicData, originalItems) {
+    try {
+        // 创建所有图片处理Promise
+        const imagePromises = originalItems.map((item, index) => 
+            processBilibiliImage(item.pic, item.bvid).then(base64Url => {
+                // 更新对应项的图片URL
+                if (basicData[index]) {
+                    basicData[index].cover = base64Url;
+                }
+                return base64Url;
+            })
+        );
+        
+        // 等待所有图片处理完成
+        await Promise.all(imagePromises);
+        
+        // 触发响应式更新
+        biliData.value = [...basicData];
+    } catch (error) {
+        console.error("Error processing Bilibili images:", error);
+    }
+}
+// 处理单个B站图片URL的函数
+async function processBilibiliImage(picUrl, bvid) {
+    if (!picUrl) return '';
+    
+    try {
+        // 构建完整URL
+        let fullUrl = picUrl;
+        if (picUrl.startsWith('//')) {
+            fullUrl = 'https:' + picUrl;
+        } else if (!picUrl.startsWith('http')) {
+            fullUrl = 'https:' + picUrl;
+        }
+        // 通过Electron主进程获取图片并转为Base64
+        const { ipcRenderer } = require("electron");
+        const base64Image = await ipcRenderer.invoke("get-bilibili-image", fullUrl);
+
+        
+        if (base64Image) {
+            return `data:image/jpeg;base64,${base64Image}`;
+        } else {
+            // 如果获取失败，返回默认图片
+            return '';
+        }
+    } catch (error) {
+        console.error("Error processing image for", bvid, ":", error);
+        return '';
+    }
+}
+
 onMounted(() => {
-    // 分别发起请求，不需要等待所有请求完成
     list.forEach(item => requestData(item));
 });
 </script>
@@ -127,6 +256,40 @@ a-space {
 }
 
 .hot-item-link:hover {
+    text-decoration: underline;
+}
+
+/* 肯德基内容样式 */
+.kfc-content {
+    display: flex;
+    align-items: flex-start;
+}
+
+.kfc-text {
+    flex: 1;
+    line-height: 1.4;
+    word-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kfc-text.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+}
+
+.expand-link {
+    color: #1890ff;
+    margin-left: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.expand-link:hover {
     text-decoration: underline;
 }
 </style>
