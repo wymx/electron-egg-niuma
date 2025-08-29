@@ -87,6 +87,13 @@ function toggleKfcExpand() {
     isKfcExpanded.value = !isKfcExpanded.value;
 }
 
+// function openInBrowser(url) {
+//   if (url) { 
+//     const { shell } = require("electron");
+//     url = url.replace("https://api.zhihu.com/questions", "https://www.zhihu.com/question");
+//     shell.openExternal(url);
+//   } 
+// } 
 async function requestData(path) {
     try {
 
@@ -111,7 +118,10 @@ async function requestData(path) {
                     weiboData.value = response.data.data || [];
                     break;
                 case "zhihu":
-                    zhihuData.value = response.data.data || [];
+                    zhihuData.value = (response.data.data || []).map(item => ({
+                        ...item,
+                        link: item.link.replace("https://api.zhihu.com/questions", "https://www.zhihu.com/question")
+                    }));
                     break;
                 case "douyin":
                     douyinData.value = response.data.data || [];
@@ -164,7 +174,7 @@ async function getBili() {
 async function processAllBilibiliImages(basicData, originalItems) {
     try {
         // 创建所有图片处理Promise
-        const imagePromises = originalItems.map((item, index) => 
+        const imagePromises = originalItems.map((item, index) =>
             processBilibiliImage(item.pic, item.bvid).then(base64Url => {
                 // 更新对应项的图片URL
                 if (basicData[index]) {
@@ -173,10 +183,10 @@ async function processAllBilibiliImages(basicData, originalItems) {
                 return base64Url;
             })
         );
-        
+
         // 等待所有图片处理完成
         await Promise.all(imagePromises);
-        
+
         // 触发响应式更新
         biliData.value = [...basicData];
     } catch (error) {
@@ -186,7 +196,7 @@ async function processAllBilibiliImages(basicData, originalItems) {
 // 处理单个B站图片URL的函数
 async function processBilibiliImage(picUrl, bvid) {
     if (!picUrl) return '';
-    
+
     try {
         // 构建完整URL
         let fullUrl = picUrl;
@@ -199,7 +209,7 @@ async function processBilibiliImage(picUrl, bvid) {
         const { ipcRenderer } = require("electron");
         const base64Image = await ipcRenderer.invoke("get-bilibili-image", fullUrl);
 
-        
+
         if (base64Image) {
             return `data:image/jpeg;base64,${base64Image}`;
         } else {
