@@ -280,8 +280,9 @@ a-space {
     line-height: 1.4;
     word-wrap: break-word;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2; /* 添加标准属性 */
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -289,6 +290,7 @@ a-space {
 .kfc-text.expanded {
     display: block;
     -webkit-line-clamp: unset;
+    line-clamp: unset; /* 同步更新 */
 }
 
 .expand-link {
