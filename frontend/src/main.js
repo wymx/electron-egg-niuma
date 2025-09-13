@@ -6,6 +6,21 @@ import './assets/global.less';
 import components from './components/global';
 import Router from './router/index';
 
+
+// 设置初始主题
+function setInitialTheme() {
+  const savedTheme = localStorage.getItem('app-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (savedTheme) {
+    document.body.classList.toggle('dark-theme', savedTheme === 'dark');
+  } else if (prefersDark) {
+    document.body.classList.add('dark-theme');
+    localStorage.setItem('app-theme', 'dark');
+  }
+}
+
+// setInitialTheme();
 const app = createApp(App)
 
 // components

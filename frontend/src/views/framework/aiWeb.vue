@@ -2,6 +2,9 @@
     <div class="ai-web-container">
         <Card :bordered="false" class="nav-card">
             <Space size="large">
+                <Button type="primary" @click="closeUrlWindow" size="small" style="margin-left: 10px;">
+                    关闭弹窗
+                </Button>
                 <Button type="primary" @click="openLink('https://chat.deepseek.com')">
                     DeepSeek
                 </Button>
@@ -18,6 +21,7 @@
                     kimi
                 </Button>
                 <Button type="primary" @click="visible = true">显示提示词</Button>
+
             </Space>
         </Card>
 
@@ -63,9 +67,15 @@ import { EditorView } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language'
 
+const { ipcRenderer } = require("electron");
 import { templateList } from '../../utils/request.js'
 const openLink = (url) => {
-    window.open(url, '_blank');
+    ipcRenderer.invoke("open-link-in-window", url);
+    // window.open(url, '_blank');
+};
+
+const closeUrlWindow = () => {
+    ipcRenderer.invoke("close-url-window");
 };
 
 const visible = ref(false);

@@ -6,3 +6,115 @@
   color: #2c3e50;
   height: 100%;
 }
+
+// 添加深色主题样式
+body.dark-theme {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  
+  #app {
+    color: #e0e0e0;
+  }
+  
+  // Ant Design 深色主题覆盖
+  .ant-card {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+  
+  .ant-card-bordered {
+    border: 1px solid #444;
+  }
+  
+  .ant-btn {
+    background-color: #3a3a3a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  
+  .ant-btn-primary {
+    background-color: #177ddc;
+    border-color: #177ddc;
+    color: #fff;
+  }
+  
+  .ant-btn-primary:hover {
+    background-color: #1765ad;
+    border-color: #1765ad;
+  }
+  
+  .ant-space {
+    color: #e0e0e0;
+  }
+  
+  .ant-slider {
+    background-color: transparent;
+  }
+  
+  .ant-slider-track {
+    background-color: #177ddc;
+  }
+  
+  .ant-slider-handle {
+    background-color: #fff;
+    border-color: #177ddc;
+  }
+  
+  .ant-table {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+  
+  .ant-table-thead > tr > th {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+  }
+  
+  .ant-table-tbody > tr > td {
+    border-bottom: 1px solid #444;
+  }
+  
+  .ant-table-tbody > tr:hover > td {
+    background-color: #3a3a3a;
+  }
+  
+  .ant-modal-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+  
+  .ant-modal-header {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border-bottom: 1px solid #444;
+  }
+  
+  .ant-modal-footer {
+    border-top: 1px solid #444;
+  }
+  
+  .ant-input {
+    background-color: #3a3a3a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  
+  .ant-input:focus {
+    border-color: #177ddc;
+    box-shadow: 0 0 0 2px rgba(23, 125, 220, 0.2);
+  }
+  
+  a {
+    color: #3c9ae8;
+  }
+  
+  a:hover {
+    color: #177ddc;
+  }
+}
+
+// iframe 内容的深色主题适配
+.content-iframe {
+  filter: brightness(0.9) contrast(1.1);
+}

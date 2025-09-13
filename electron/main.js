@@ -12,6 +12,11 @@ const {
   saveImage,
   reloadAppHandlers,
 } = require("./custom/ipcHandlers");
+
+const {
+  changeOpacity,
+} = require("./custom/changeOpacity");
+
 const {
   runPuppeteerWithElectronChromium,
 } = require("./custom/chromeHandlers");
@@ -43,6 +48,7 @@ createMenu(); // 创建自定义菜单
 
 pie.initialize(require("electron").app);
 function initializeIpc() {
+  changeOpacity();
   registerAppHandlers();
   registerApiHandlers();
   registerVersionHandler();
