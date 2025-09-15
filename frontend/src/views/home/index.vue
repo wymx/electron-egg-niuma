@@ -6,7 +6,7 @@
                 关闭弹窗
             </Button>
             <span>窗口透明度:</span>
-            <Slider v-model:value="windowOpacity" :min="0.01" :max="1" :step="0.01" @change="handleOpacityChange"
+            <Slider v-model:value="windowOpacity" :min="0.1" :max="1" :step="0.01" @change="handleOpacityChange"
                 style="width: 200px; margin: 0 10px;" />
             <span>{{ Math.round(windowOpacity * 100) }}%</span>
             <Button type="primary" @click="lookHotList" size="small" style="margin-left: 10px;">
