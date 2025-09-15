@@ -249,7 +249,9 @@ const menuListInfo = async () => {
 
 const menuClick = async (item) => {
     try {
-        window.open(item.url);
+        const { ipcRenderer } = require("electron");
+        ipcRenderer.invoke("open-link-in-window", item.url);
+        // window.open(item.url);
     } catch (e) {
         console.error("获取:", e);
     }
