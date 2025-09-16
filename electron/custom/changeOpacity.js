@@ -36,7 +36,7 @@ function createLinkWindow(url) {
   const linkWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    transparent: true, // 启用透明
+    transparent: false, // 启用透明，这里改成false才能显示弹窗的关闭按钮
     frame: true,
     webPreferences: {
       nodeIntegration: false,
