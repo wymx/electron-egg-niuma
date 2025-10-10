@@ -35,5 +35,6 @@ for (const i in AntIcon) {
     app.component(i, AntIcon[i])
   }
 }
+app.config.globalProperties.$icons = AntIcon
 
 app.use(Antd).use(Router).mount('#app')

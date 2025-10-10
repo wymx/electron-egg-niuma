@@ -85,7 +85,7 @@
                             <block v-for="(menuItem, index) in menuList" :key="menuItem?.key || index"
                                 @click="menuClick(menuItem)">
                                 <a-menu-item v-if="menuItem.isShow">
-                                    <Html5Outlined />
+                                    <component :is="$icons[menuItem.icon] ? $icons[menuItem.icon] : 'Html5Outlined'" />
                                     {{ menuItem.name }}
                                 </a-menu-item>
                             </block>
